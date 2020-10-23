@@ -1,0 +1,17 @@
+version: '3.4'
+  
+networks:
+  web:
+    external:
+      name: web
+services:
+  api:
+    labels:
+      - 'traefik.backend=cutting-vendor'
+      - 'traefik.port=4044'
+      - 'traefik.frontend.rule=Host:vendor.boquetemarket.com'
+    networks:
+      web:
+    image: wayimp/cutting-vendor
+    ports:
+      - 4044:4044
