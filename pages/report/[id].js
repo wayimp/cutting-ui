@@ -48,10 +48,9 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline'
 import DateFnsUtils from '@date-io/date-fns'
-import ReportItems from '../../components/ReportItems'
 import {
   MuiPickersUtilsProvider,
-  KeyboardTimePicker,
+  TimePicker,
   KeyboardDatePicker
 } from '@material-ui/pickers'
 import Select from 'react-select'
@@ -161,44 +160,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [reportEdit, setReportEdit] = useState({})
   const { enqueueSnackbar } = useSnackbar()
   const [selectedDate, setSelectedDate] = React.useState(new Date())
-
-  /*
-  //Do we really need a modal here?
-  const [openItems, setOpenItems] = React.useState(false)
-
-  const handleOpenItems = () => {
-    setOpenItems(true)
-  }
-
-  const handleCloseItems = () => {
-    setOpenItems(false)
-  }
-
-  const handleEditItems = () => {
-    const edit = JSON.parse(JSON.stringify(report))
-    setReportEdit(edit)
-    setOpenItems(true)
-  }
-
-  const handleSaveItems = async options => {
-    const materials = options.map(option => {
-      const material = {
-        quantity: option.quantity,
-        type: option.type,
-        item: option.value,
-        description: option.label
-      }
-      return material
-    })
-    const updated = {
-      ...report,
-      materials
-    }
-    setReport(updated)
-    updateReport(updated)
-    handleCloseItems()
-  }
-  */
+  const [addIssue, setAddIssue] = React.useState('')
 
   const onUnload = () => {
     updateReport(report)
@@ -241,6 +203,23 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     setSelectedDate(date)
   }
 
+  const selectMaterialOption = option => {
+    // Translate this from an option to a material
+    if (!option) return
+    const material = {
+      quantity: 1,
+      type: option.type,
+      item: option.value,
+      description: option.label
+    }
+    const updated = {
+      ...report,
+      materials: [material].concat(report.materials)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
   const addMaterial = index => {
     const updated = {
       ...report,
@@ -268,17 +247,173 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     updateReport(updated)
   }
 
-  const selectMaterialOption = option => {
-    // Translate this from an option to a material
-    const material = {
-      quantity: 1,
-      type: option.type,
-      item: option.value,
-      description: option.label
+  const changeAddIssue = event => {
+    setAddIssue(event.target.value)
+  }
+
+  const addNewIssue = event => {
+    if (addIssue) {
+      const issueObject = { description: addIssue, resolved: false }
+      const updated = {
+        ...report,
+        issues: report.issues.concat(issueObject)
+      }
+      setReport(updated)
+      updateReport(updated)
+      setAddIssue('')
+    }
+  }
+
+  const issueResolved = index => {
+    const updated = {
+      ...report,
+      issues: report.issues.map((issue, i) => {
+        if (i === index) issue.resolved = !issue.resolved
+        return issue
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const removeIssue = index => {
+    const updated = {
+      ...report,
+      issues: report.issues
+        .map((issue, i) => {
+          if (i === index) return null
+          else return issue
+        })
+        .filter(notNull => notNull)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const addLogEntry = () => {
+    const date = moment()
+    const remainder = 5 - (date.minute() % 5)
+    const dateTime = moment(date)
+      .add(remainder, 'minutes')
+      .format('MM/DD/YYYY, hh:mm A')
+    const logEntry = {
+      logDate: dateTime,
+      timeOn: dateTime,
+      timeOff: dateTime,
+      mileage: 0.0,
+      hours: 0.0,
+      lodging: false,
+      toll: false
     }
     const updated = {
       ...report,
-      materials: [material].concat(report.materials)
+      logs: report.logs.concat(logEntry)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const removeLogEntry = index => {
+    const updated = {
+      ...report,
+      logs: report.logs
+        .map((log, i) => {
+          if (i === index) return null
+          else return log
+        })
+        .filter(notNull => notNull)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const changeLogMileage = (index, text) => {
+    const mileage = Number(text)
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, mileage }
+        else return log
+      })
+    }
+    setReport(updated)
+  }
+
+  const changeLogLodging = index => {
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, lodging: !log.lodging }
+        else return log
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const changeLogToll = index => {
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, toll: !log.toll }
+        else return log
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const handleLogDateChange = (index, date) => {
+    const logDate = moment(date).format('MM/DD/YYYYY')
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, logDate }
+        else return log
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const handleLogTimeOnChange = (index, date) => {
+    const timeOn = moment(date).format('MM/DD/YYYYY hh:mm a')
+    let hours = 0
+    if (report.timeOff) {
+      const timeOff = moment(report.timeOff)
+      if (timeOff.isAfter(timeOn)) {
+        const duration = moment.duration(timeOff.diff(timeOn))
+        hours = duration.asHours()
+      }
+    }
+
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, timeOn, hours }
+        else return log
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const handleLogTimeOffChange = (index, date) => {
+    const timeOff = moment(date).format('MM/DD/YYYYY hh:mm a')
+    let hours = 0
+    if (report.timeOn) {
+      const timeOn = moment(report.timeOn)
+      if (timeOff.isAfter(timeOn)) {
+        const duration = moment.duration(timeOff.diff(timeOn))
+        hours = duration.asHours()
+      }
+    }
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, timeOff, hours }
+        else return log
+      })
     }
     setReport(updated)
     updateReport(updated)
@@ -307,7 +442,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           alignItems='flex-end'
           justify='space-between'
@@ -578,6 +712,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
+
         <Grid
           container
           direction='row'
@@ -588,17 +723,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         >
           <Box width={1}>
             <Grid item>
-              {/*
-              <Button
-                onClick={handleEditItems}
-                variant='contained'
-                color='secondary'
-                className={classes.button}
-                startIcon={<FormatListBulletedIcon />}
-              >
-                Materials Used
-              </Button>
-              */}
               <Typography style={{ margin: 6 }}>Materials Used</Typography>
               <Select
                 className='itemsSelect'
@@ -609,20 +733,19 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 name='items'
                 options={propsOptions}
               />
-              <List dense={true}>
+              <List>
                 {report.materials.map((material, index) => (
-                  <ListItem>
-                    <ListItemAvatar>{material.quantity}</ListItemAvatar>
+                  <ListItem key={'material' + index}>
+                    <ListItemAvatar>
+                      <Typography>{material.quantity.toString()}</Typography>
+                    </ListItemAvatar>
                     <ListItemText
                       edge='begin'
                       primary={`${material.item}`}
                       secondary={`${material.description}`}
                     />
                     <ListItemSecondaryAction>
-                      <IconButton
-                        onClick={() => addMaterial(index)}
-                        edge='begin'
-                      >
+                      <IconButton onClick={() => addMaterial(index)} edge='end'>
                         <AddCircleOutlineIcon />
                       </IconButton>
                       <IconButton
@@ -638,127 +761,270 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
-        {/*
-        <ReportItems
-          handleSaveItems={handleSaveItems}
-          handleCloseItems={handleCloseItems}
-          openItems={openItems}
-          itemOptions={propsOptions}
-        />
-       
-Not sure if I even want save cancel buttons.
-            <Grid
-              container
-              direction='row'
-              justify='flex-end'
-              alignItems='flex-end'
-            >
-              <Button
-                variant='contained'
-                color='secondary'
-                style={{ margin: 10 }}
-                onClick={handleCloseItems}
-                startIcon={<CancelIcon />}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant='contained'
-                color='primary'
-                style={{ margin: 10 }}
-                onClick={() => updateReport(report)}
-                startIcon={<SaveIcon />}
-              >
-                Save
-              </Button>
-            </Grid>
-*/}
 
-        {/*
-
-  "materials": [
-    {
-      "quantity": 1,
-      "itemNo": "1",
-      "itemName": "test"
-    }
-  ],
-  "servicePerformed": "",
-  "issues": [
-    {
-      "description": "test",
-      "resolved": false
-    }
-  ],
-  "logs": [
-    {
-      "date": "",
-      "on": "",
-      "off": "",
-      "mileage": 10,
-      "hours": 3.2,
-      "lodging": false,
-      "toll": false
-    }
-  ],
-  "completed": true,
-  "satifaction": true,
-  "customerSignature": "",
-  "customerSignatureDate": "",
-  "servicemanSignature": "",
-  "servicemanSignatureDate": ""
-
-        <Grid item container xs={12} spacing={2} justify='flex-end'>
-          <Grid item>
-            <Timeline>
-              {report.timeline.map((timestamp, index) => (
-                <TimelineItem key={index}>
-                  <TimelineSeparator>
-                    <TimelineDot />
-                    {index < report.timeline.length - 1 ? (
-                      <TimelineConnector />
-                    ) : (
-                      ''
-                    )}
-                  </TimelineSeparator>
-                  <TimelineContent>
-                    <Typography>
-                      {timestamp[`description_${langSuffix}`]}<p/>
-                      {moment(timestamp.timestamp, dateFormat)
-                        .locale(lang.substring(0, 2))
-                        .format(dateDisplay)}
-                    </Typography>
-                  </TimelineContent>
-                </TimelineItem>
-              ))}
-            </Timeline>
-          </Grid>
-          {report.timeline.length <= 1 ? (
+        <Grid
+          container
+          direction='row'
+          xs={12}
+          spacing={2}
+          justify='space-between'
+          className={classes.formGroup}
+        >
+          <Box width={1}>
             <Grid item>
-              <Button
-                onClick={reportDelivered}
-                variant='contained'
-                color='primary'
-                className={classes.button}
-                startIcon={<CheckCircleIcon />}
-              >
-                {getLangString('report.delivered', lang)}
-              </Button>
-              <Button
-                onClick={reportCancelled}
-                variant='contained'
-                color='secondary'
-                className={classes.button}
-                startIcon={<CancelIcon />}
-              >
-                {getLangString('report.cancelled', lang)}
-              </Button>
+              <TextField
+                className={classes.textFieldWide}
+                multiline={true}
+                variant='outlined'
+                name='servicePerformed'
+                label='Service Performed'
+                defaultValue={
+                  report.servicePerformed ? report.servicePerformed : ''
+                }
+                onChange={changeField}
+                onBlur={blurField}
+              />
             </Grid>
-          ) : (
-            ''
-          )}
+          </Box>
         </Grid>
-        */}
+
+        <Grid
+          container
+          direction='row'
+          xs={12}
+          spacing={2}
+          justify='space-between'
+          className={classes.formGroup}
+        >
+          <Box width={1}>
+            <Grid item>
+              <Typography style={{ margin: 6 }}>Follow-Up Issues</Typography>
+              <Box width={1}>
+                <TextField
+                  variant='outlined'
+                  name='addIssue'
+                  label='Add Issue'
+                  onChange={changeAddIssue}
+                  value={addIssue}
+                />
+                <IconButton onClick={() => addNewIssue()} edge='end'>
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </Box>
+              <List>
+                {report.issues.map((issue, index) => (
+                  <ListItem
+                    key={'issue' + index}
+                    button
+                    id={'issue' + index}
+                    style={{
+                      textDecoration: issue.resolved ? 'line-through' : 'none'
+                    }}
+                    onClick={() => issueResolved(index)}
+                    divider
+                  >
+                    <ListItemText primary={`${issue.description}`} />
+                    <ListItemSecondaryAction>
+                      <IconButton onClick={() => removeIssue(index)} edge='end'>
+                        <RemoveCircleOutlineIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            </Grid>
+          </Box>
+        </Grid>
+
+        <Grid
+          container
+          direction='row'
+          xs={12}
+          spacing={2}
+          justify='space-between'
+          className={classes.formGroup}
+        >
+          <Box width={1}>
+            <Grid item>
+              <Typography style={{ margin: 6 }}>Log Entries</Typography>
+              <IconButton onClick={() => addLogEntry()} edge='end'>
+                <AddCircleOutlineIcon />
+              </IconButton>
+              <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                <List dense={true}>
+                  {report.logs.map((log, index) => (
+                    <ListItem key={'log' + index}>
+                      <ListItemText>
+                        <Grid
+                          container
+                          direction='row'
+                          xs={12}
+                          spacing={2}
+                          justify='space-between'
+                          className={classes.formGroup}
+                        >
+                          <Grid item>
+                            <KeyboardDatePicker
+                              disableToolbar
+                              variant='outlined'
+                              format='MM/dd/yyyy'
+                              label='Date'
+                              value={log.logDate}
+                              onChange={date =>
+                                handleLogDateChange(index, date)
+                              }
+                            />
+                          </Grid>
+                          <Grid item>
+                            <TimePicker
+                              showTodayButton
+                              todayLabel='now'
+                              minutesStep={5}
+                              label='Time On'
+                              value={log.timeOn}
+                              onChange={date =>
+                                handleLogTimeOnChange(index, date)
+                              }
+                            />
+                          </Grid>
+                          <Grid item>
+                            <TimePicker
+                              showTodayButton
+                              todayLabel='now'
+                              minutesStep={5}
+                              label='Time Off'
+                              value={log.timeOff}
+                              onChange={date =>
+                                handleLogTimeOffChange(index, date)
+                              }
+                            />
+                            {log.hours ? 'Total hours: ' + log.hours : ''}
+                          </Grid>
+                          <Grid item>
+                            <TextField
+                              label='Mileage'
+                              type='number'
+                              defaultValue={log.mileage}
+                              onChange={event =>
+                                changeLogMileage(index, event.target.value)
+                              }
+                            />
+                          </Grid>
+                          <Grid item>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  className={classes.checkbox}
+                                  checked={log.lodging}
+                                  onChange={() => changeLogLodging(index)}
+                                  name='lodging'
+                                  color='primary'
+                                />
+                              }
+                              label='Lodging'
+                            />
+                          </Grid>
+                          <Grid item>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  className={classes.checkbox}
+                                  checked={log.toll}
+                                  onChange={() => changeLogToll(index)}
+                                  name='toll'
+                                  color='primary'
+                                />
+                              }
+                              label='Toll'
+                            />
+                          </Grid>
+                        </Grid>
+                      </ListItemText>
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          onClick={() => removeLogEntry(index)}
+                          edge='end'
+                        >
+                          <RemoveCircleOutlineIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </MuiPickersUtilsProvider>
+            </Grid>
+          </Box>
+        </Grid>
+        <Grid
+          container
+          direction='row'
+          xs={12}
+          spacing={2}
+          justify='space-between'
+          className={classes.formGroup}
+        >
+          <Grid item>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  className={classes.checkbox}
+                  checked={report.completed}
+                  onChange={changeCheckbox}
+                  name='completed'
+                  color='primary'
+                />
+              }
+              label='Job Completed'
+            />
+          </Grid>
+          <Grid item>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  className={classes.checkbox}
+                  checked={report.satisfaction}
+                  onChange={changeCheckbox}
+                  name='satisfaction'
+                  color='primary'
+                />
+              }
+              label='Has the job been completed to your satisfaction?'
+            />
+          </Grid>
+          <Grid item>
+            <TextField
+              className={classes.textField}
+              InputAdornment={
+                report.customerSignatureDate ? report.customerSignatureDate : ''
+              }
+              inputProps={{style: {fontFamily: 'Notera', fontSize: 'xx-large'}}} 
+              name='customerSignature'
+              label='Customer Signature'
+              defaultValue={
+                report.customerSignature ? report.customerSignature : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+            />
+          </Grid>
+          <Grid item>
+            <TextField
+              className={classes.textField}
+              InputAdornment={
+                report.servicemanSignatureDate
+                  ? report.servicemanSignatureDate
+                  : ''
+              }
+              name='servicemanSignature'
+              label='Serviceman Signature'
+              defaultValue={
+                report.servicemanSignature ? report.servicemanSignature : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+            />
+          </Grid>
+        </Grid>
       </div>
     </Container>
   )
