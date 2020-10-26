@@ -174,7 +174,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     }
   })
 
-  const changeValue = (name, value) => {
+  const changeValue = async (name, value) => {
     const updated = {
       ...report,
       [name]: value
@@ -183,7 +183,29 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const changeField = event => {
-    changeValue(event.target.name, event.target.value)
+    const fieldName = event.target.name
+    const fieldValue = event.target.value
+
+    // Beware race condition when updating two fields at once
+    switch (fieldName) {
+      case 'customerSignature':
+        changeValue(
+          'customerSignatureDate',
+          moment().format('MM/DD/YYYY')
+        ).then(changeValue(fieldName, fieldValue))
+        break
+
+      case 'servicemanSignature':
+        changeValue(
+          'servicemanSignatureDate',
+          moment().format('MM/DD/YYYY')
+        ).then(changeValue(fieldName, fieldValue))
+        break
+
+      default:
+        changeValue(fieldName, fieldValue)
+        break
+    }
   }
 
   const blurField = event => {
@@ -978,6 +1000,26 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             />
           </Grid>
           <Grid item>
+            <TextField
+              className={classes.textField}
+              helperText={
+                report.servicemanSignatureDate
+                  ? report.servicemanSignatureDate
+                  : ''
+              }
+              inputProps={{
+                style: { fontFamily: 'FFX Handwriting', fontSize: 'xx-large' }
+              }}
+              name='servicemanSignature'
+              label='Serviceman Signature'
+              defaultValue={
+                report.servicemanSignature ? report.servicemanSignature : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+            />
+          </Grid>
+          <Grid item>
             <FormControlLabel
               control={
                 <Checkbox
@@ -994,31 +1036,16 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           <Grid item>
             <TextField
               className={classes.textField}
-              InputAdornment={
+              helperText={
                 report.customerSignatureDate ? report.customerSignatureDate : ''
               }
-              inputProps={{style: {fontFamily: 'Notera', fontSize: 'xx-large'}}} 
+              inputProps={{
+                style: { fontFamily: 'FFX Handwriting', fontSize: 'xx-large' }
+              }}
               name='customerSignature'
               label='Customer Signature'
               defaultValue={
                 report.customerSignature ? report.customerSignature : ''
-              }
-              onChange={changeField}
-              onBlur={blurField}
-            />
-          </Grid>
-          <Grid item>
-            <TextField
-              className={classes.textField}
-              InputAdornment={
-                report.servicemanSignatureDate
-                  ? report.servicemanSignatureDate
-                  : ''
-              }
-              name='servicemanSignature'
-              label='Serviceman Signature'
-              defaultValue={
-                report.servicemanSignature ? report.servicemanSignature : ''
               }
               onChange={changeField}
               onBlur={blurField}

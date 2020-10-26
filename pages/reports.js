@@ -8,6 +8,7 @@ import { fade, makeStyles, useTheme } from '@material-ui/core/styles'
 import { getLangString } from '../components/Lang'
 import Link from '../src/Link'
 import TopBar from '../components/TopBar'
+import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline'
 import AddLocationIcon from '@material-ui/icons/AddLocation'
 import LocationOnIcon from '@material-ui/icons/LocationOn'
 import SendIcon from '@material-ui/icons/Send'
@@ -157,12 +158,116 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
     }
   }, [])
 
+  const createNew = async existing => {
+    const newReport = {
+      job: '',
+      date: moment().format('YYYY-MM-DD'),
+      po: '',
+      customerName: '',
+      customerStreet: '',
+      customerCity: '',
+      customerState: '',
+      customerZip: '',
+      customerPhone: '',
+      machineType: '',
+      machineSerial: '',
+      control: '',
+      controlSerial: '',
+      plasmaType: '',
+      plasmaModel: '',
+      plasmaSerial: '',
+      oxyFuel: false,
+      torches: '',
+      drive: '',
+      driveSerial: '',
+      reportedTrouble: '',
+      materials: [],
+      servicePerformed: '',
+      issues: [],
+      logs: [],
+      completed: false,
+      customerSignature: '',
+      customerSignatureDate: '',
+      satisfaction: false,
+      servicemanSignature: '',
+      servicemanSignatureDate: ''
+    }
+
+    createReport(newReport)
+  }
+
+  const copyToNew = async existing => {
+    const newReport = {
+      job: existing.job,
+      date: moment().format('YYYY-MM-DD'),
+      po: existing.po,
+      customerName: existing.customerName,
+      customerStreet: existing.customerStreet,
+      customerCity: existing.customerCity,
+      customerState: existing.customerState,
+      customerZip: existing.customerZip,
+      customerPhone: existing.customerPhone,
+      machineType: existing.machineType,
+      machineSerial: existing.machineSerial,
+      control: existing.control,
+      controlSerial: existing.controlSerial,
+      plasmaType: existing.plasmaType,
+      plasmaModel: existing.plasmaModel,
+      plasmaSerial: existing.plasmaSerial,
+      oxyFuel: existing.oxyFuel,
+      torches: existing.torches,
+      drive: existing.drive,
+      driveSerial: existing.driveSerial,
+      reportedTrouble: '',
+      materials: [],
+      servicePerformed: '',
+      issues: [],
+      logs: [],
+      completed: false,
+      customerSignature: '',
+      customerSignatureDate: '',
+      satisfaction: false,
+      servicemanSignature: '',
+      servicemanSignatureDate: ''
+    }
+
+    createReport(newReport)
+  }
+
+  const createReport = async report => {
+    await axiosClient({
+      method: 'post',
+      url: '/reports',
+      data: newReport,
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        enqueueSnackbar('New Report Created', {
+          variant: 'success'
+        })
+      })
+      .catch(error => {
+        enqueueSnackbar('Error Creating Report: ' + error, {
+          variant: 'error'
+        })
+      })
+  }
+
   return (
     <Container>
       <TopBar />
       <main className={classes.content}>
         <div className={classes.toolbar} />
         <div className={classes.root}>
+          <Button
+            variant='contained'
+            color='primary'
+            style={{ margin: 20 }}
+            onClick={createNew}
+            startIcon={<AddCircleOutlineIcon />}
+          >
+            New Report
+          </Button>
           {days.map(day => (
             <Card key={day} className={classes.section}>
               <h3>{day}</h3>
@@ -176,7 +281,11 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
                 {reportsSorted
                   .filter(report => report.daySubmitted === day)
                   .map(report => (
-                    <ReportCard key={report._id} report={report} />
+                    <ReportCard
+                      key={report._id}
+                      report={report}
+                      copyToNew={copyToNew}
+                    />
                   ))}
               </Grid>
             </Card>

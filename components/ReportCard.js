@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { useSnackbar } from 'notistack'
 import { makeStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import { red } from '@material-ui/core/colors'
@@ -22,10 +23,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Paper
 } from '@material-ui/core'
 
 import LaunchIcon from '@material-ui/icons/Launch'
+import FileCopyIcon from '@material-ui/icons/FileCopy'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
 import moment from 'moment'
@@ -64,9 +67,10 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const ReportCard = ({ report }) => {
+const ReportCard = ({ report, copyToNew }) => {
   const classes = useStyles()
   const [expanded, setExpanded] = React.useState(false)
+  const { enqueueSnackbar } = useSnackbar()
 
   const handleExpandClick = () => {
     setExpanded(!expanded)
@@ -78,11 +82,20 @@ const ReportCard = ({ report }) => {
         title={report.customerName}
         subheader={'Job#' + report.job}
         action={
-          <IconButton aria-label='Report Detail'>
-            <Link href={`/report/${report._id}`} target={report._id}>
-              <LaunchIcon />
-            </Link>
-          </IconButton>
+          <>
+            <Tooltip title='Copy Customer Details to New Report'>
+              <IconButton onClick={() => copyToNew(report)}>
+                <FileCopyIcon color='secondary' />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='View or Edit Report'>
+              <IconButton>
+                <Link href={`/report/${report._id}`} target={report._id}>
+                  <LaunchIcon color='secondary' />
+                </Link>
+              </IconButton>
+            </Tooltip>
+          </>
         }
       />
       <CardContent>
