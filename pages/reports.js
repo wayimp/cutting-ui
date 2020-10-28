@@ -117,13 +117,14 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
   const { enqueueSnackbar } = useSnackbar()
 
   const getData = () => {
-    dispatch({ type: 'SEGMENT', payload: 'reports' })
     axiosClient({
       method: 'get',
       url: '/reports',
       headers: { Authorization: `Bearer ${token}` }
     }).then(response => {
-      setReports(Array.isArray(response.data) ? response.data : [])
+      const result =
+        response.data && Array.isArray(response.data) ? response.data : []
+      setReports(result)
     })
   }
 
@@ -160,8 +161,9 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
 
   const createNew = async existing => {
     const newReport = {
+      archived: false,
       job: '',
-      date: moment().format('YYYY-MM-DD'),
+      date: moment().startOf('day'),
       po: '',
       customerName: '',
       customerStreet: '',
@@ -187,10 +189,10 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
       logs: [],
       completed: false,
       customerSignature: '',
-      customerSignatureDate: '',
+      customerSignatureDate: null,
       satisfaction: false,
       servicemanSignature: '',
-      servicemanSignatureDate: ''
+      servicemanSignatureDate: null
     }
 
     createReport(newReport)
@@ -198,8 +200,9 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
 
   const copyToNew = async existing => {
     const newReport = {
+      archived: false,
       job: existing.job,
-      date: moment().format('YYYY-MM-DD'),
+      date: moment().startOf('day'),
       po: existing.po,
       customerName: existing.customerName,
       customerStreet: existing.customerStreet,
@@ -225,10 +228,10 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
       logs: [],
       completed: false,
       customerSignature: '',
-      customerSignatureDate: '',
+      customerSignatureDate: null,
       satisfaction: false,
       servicemanSignature: '',
-      servicemanSignatureDate: ''
+      servicemanSignatureDate: null
     }
 
     createReport(newReport)
@@ -238,16 +241,38 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
     await axiosClient({
       method: 'post',
       url: '/reports',
-      data: newReport,
+      data: report,
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => {
         enqueueSnackbar('New Report Created', {
           variant: 'success'
         })
+        getData()
       })
       .catch(error => {
         enqueueSnackbar('Error Creating Report: ' + error, {
+          variant: 'error'
+        })
+      })
+  }
+
+  const archiveReport = async report => {
+    report.archived = true
+    await axiosClient({
+      method: 'patch',
+      url: '/reports',
+      data: report,
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        enqueueSnackbar('Report Archived', {
+          variant: 'success'
+        })
+        getData()
+      })
+      .catch(error => {
+        enqueueSnackbar('Error Archiving Report: ' + error, {
           variant: 'error'
         })
       })
@@ -261,7 +286,7 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
         <div className={classes.root}>
           <Button
             variant='contained'
-            color='primary'
+            color='secondary'
             style={{ margin: 20 }}
             onClick={createNew}
             startIcon={<AddCircleOutlineIcon />}
@@ -285,6 +310,7 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
                       key={report._id}
                       report={report}
                       copyToNew={copyToNew}
+                      archive={archiveReport}
                     />
                   ))}
               </Grid>

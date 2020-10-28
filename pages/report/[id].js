@@ -51,7 +51,7 @@ import DateFnsUtils from '@date-io/date-fns'
 import {
   MuiPickersUtilsProvider,
   TimePicker,
-  KeyboardDatePicker
+  DatePicker
 } from '@material-ui/pickers'
 import Select from 'react-select'
 
@@ -159,7 +159,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [report, setReport] = React.useState(propsReport)
   const [reportEdit, setReportEdit] = useState({})
   const { enqueueSnackbar } = useSnackbar()
-  const [selectedDate, setSelectedDate] = React.useState(new Date())
   const [addIssue, setAddIssue] = React.useState('')
 
   const onUnload = () => {
@@ -182,6 +181,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     setReport(updated)
   }
 
+  const changeDate = date => {
+    const fieldName = 'date'
+    const fieldValue = date
+    changeValue(fieldName, fieldValue)
+  }
+
   const changeField = event => {
     const fieldName = event.target.name
     const fieldValue = event.target.value
@@ -189,17 +194,15 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     // Beware race condition when updating two fields at once
     switch (fieldName) {
       case 'customerSignature':
-        changeValue(
-          'customerSignatureDate',
-          moment().format('MM/DD/YYYY')
-        ).then(changeValue(fieldName, fieldValue))
+        changeValue('customerSignatureDate', moment()).then(
+          changeValue(fieldName, fieldValue)
+        )
         break
 
       case 'servicemanSignature':
-        changeValue(
-          'servicemanSignatureDate',
-          moment().format('MM/DD/YYYY')
-        ).then(changeValue(fieldName, fieldValue))
+        changeValue('servicemanSignatureDate', moment()).then(
+          changeValue(fieldName, fieldValue)
+        )
         break
 
       default:
@@ -219,10 +222,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     }
     setReport(updated)
     updateReport(updated)
-  }
-
-  const handleDateChange = date => {
-    setSelectedDate(date)
   }
 
   const selectMaterialOption = option => {
@@ -313,11 +312,9 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const addLogEntry = () => {
-    const date = moment()
+    const date = moment().startOf('day')
     const remainder = 5 - (date.minute() % 5)
-    const dateTime = moment(date)
-      .add(remainder, 'minutes')
-      .format('MM/DD/YYYY, hh:mm A')
+    const dateTime = moment(date).add(remainder, 'minutes')
     const logEntry = {
       logDate: dateTime,
       timeOn: dateTime,
@@ -386,7 +383,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const handleLogDateChange = (index, date) => {
-    const logDate = moment(date).format('MM/DD/YYYYY')
+    const logDate = moment(date).startOf('day')
     const updated = {
       ...report,
       logs: report.logs.map((log, i) => {
@@ -399,10 +396,13 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const handleLogTimeOnChange = (index, date) => {
-    const timeOn = moment(date).format('MM/DD/YYYYY hh:mm a')
+    const timeOn = moment(report.logs[index].logDate)
+    const newTime = moment(date)
+    timeOn.hour(newTime.get('hour'))
+    timeOn.minute(newTime.get('minute'))
     let hours = 0
-    if (report.timeOff) {
-      const timeOff = moment(report.timeOff)
+    if (report.logs[index].timeOff) {
+      const timeOff = moment(report.logs[index].timeOff)
       if (timeOff.isAfter(timeOn)) {
         const duration = moment.duration(timeOff.diff(timeOn))
         hours = duration.asHours()
@@ -421,10 +421,13 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const handleLogTimeOffChange = (index, date) => {
-    const timeOff = moment(date).format('MM/DD/YYYYY hh:mm a')
+    const timeOff = moment(report.logs[index].logDate)
+    const newTime = moment(date)
+    timeOff.hour(newTime.get('hour'))
+    timeOff.minute(newTime.get('minute'))
     let hours = 0
-    if (report.timeOn) {
-      const timeOn = moment(report.timeOn)
+    if (report.logs[index].timeOn) {
+      const timeOn = moment(report.logs[index].timeOn)
       if (timeOff.isAfter(timeOn)) {
         const duration = moment.duration(timeOff.diff(timeOn))
         hours = duration.asHours()
@@ -481,14 +484,15 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           </Grid>
           <Grid item>
             <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <KeyboardDatePicker
-                disableToolbar
+              <DatePicker
+                autoOk
+                disableFuture
                 variant='inline'
                 format='MM/dd/yyyy'
                 id='date'
                 label='Date'
-                value={selectedDate}
-                onChange={handleDateChange}
+                value={report.date}
+                onChange={changeDate}
                 onBlur={blurField}
               />
             </MuiPickersUtilsProvider>
@@ -504,11 +508,9 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             />
           </Grid>
         </Grid>
-
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
@@ -886,8 +888,9 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                           className={classes.formGroup}
                         >
                           <Grid item>
-                            <KeyboardDatePicker
-                              disableToolbar
+                            <DatePicker
+                              autoOk
+                              disableFuture
                               variant='outlined'
                               format='MM/dd/yyyy'
                               label='Date'
@@ -899,6 +902,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                           </Grid>
                           <Grid item>
                             <TimePicker
+                              autoOk
+                              disableFuture
                               showTodayButton
                               todayLabel='now'
                               minutesStep={5}
@@ -911,6 +916,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                           </Grid>
                           <Grid item>
                             <TimePicker
+                              autoOk
+                              disableFuture
                               showTodayButton
                               todayLabel='now'
                               minutesStep={5}
@@ -919,8 +926,10 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                               onChange={date =>
                                 handleLogTimeOffChange(index, date)
                               }
+                              helperText={
+                                log.hours ? 'Total hours: ' + log.hours : ''
+                              }
                             />
-                            {log.hours ? 'Total hours: ' + log.hours : ''}
                           </Grid>
                           <Grid item>
                             <TextField

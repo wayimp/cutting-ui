@@ -31,6 +31,7 @@ import LaunchIcon from '@material-ui/icons/Launch'
 import FileCopyIcon from '@material-ui/icons/FileCopy'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
+import DeleteIcon from '@material-ui/icons/Delete'
 import moment from 'moment'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd h:mm a'
@@ -67,7 +68,7 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const ReportCard = ({ report, copyToNew }) => {
+const ReportCard = ({ report, copyToNew, archive }) => {
   const classes = useStyles()
   const [expanded, setExpanded] = React.useState(false)
   const { enqueueSnackbar } = useSnackbar()
@@ -93,6 +94,11 @@ const ReportCard = ({ report, copyToNew }) => {
                 <Link href={`/report/${report._id}`} target={report._id}>
                   <LaunchIcon color='secondary' />
                 </Link>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='Archive Report'>
+              <IconButton onClick={() => archive(report)}>
+                <DeleteIcon color='secondary' />
               </IconButton>
             </Tooltip>
           </>
