@@ -32,7 +32,7 @@ import FileCopyIcon from '@material-ui/icons/FileCopy'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
 import DeleteIcon from '@material-ui/icons/Delete'
-import moment from 'moment'
+import moment from 'moment-timezone'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd h:mm a'
 import { getLangString } from '../components/Lang'
@@ -80,10 +80,13 @@ const ReportCard = ({ report, copyToNew, archive }) => {
   return (
     <Card className={classes.root}>
       <CardHeader
-        title={report.customerName}
-        subheader={'Job#' + report.job}
         action={
           <>
+            <Tooltip title='Archive Report'>
+              <IconButton onClick={() => archive(report)}>
+                <DeleteIcon color='secondary' />
+              </IconButton>
+            </Tooltip>
             <Tooltip title='Copy Customer Details to New Report'>
               <IconButton onClick={() => copyToNew(report)}>
                 <FileCopyIcon color='secondary' />
@@ -96,17 +99,15 @@ const ReportCard = ({ report, copyToNew, archive }) => {
                 </Link>
               </IconButton>
             </Tooltip>
-            <Tooltip title='Archive Report'>
-              <IconButton onClick={() => archive(report)}>
-                <DeleteIcon color='secondary' />
-              </IconButton>
-            </Tooltip>
           </>
         }
       />
       <CardContent>
-        <Typography variant='body2' color='textSecondary' component='p'>
+        <Typography variant='h5' color='textSecondary'>
           {report.customerName}
+        </Typography>
+        <Typography variant='p' color='textSecondary'>
+          {report.reportedTrouble}
         </Typography>
       </CardContent>
     </Card>

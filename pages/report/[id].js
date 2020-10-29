@@ -55,6 +55,13 @@ import {
 } from '@material-ui/pickers'
 import Select from 'react-select'
 
+const selectStyles = {
+  menu: base => ({
+    ...base,
+    zIndex: 100
+  })
+}
+
 const useStyles = makeStyles(theme => ({
   toolbar: {
     display: 'flex',
@@ -194,15 +201,17 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     // Beware race condition when updating two fields at once
     switch (fieldName) {
       case 'customerSignature':
-        changeValue('customerSignatureDate', moment()).then(
-          changeValue(fieldName, fieldValue)
-        )
+        changeValue(
+          'customerSignatureDate',
+          moment().tz('America/Los_Angeles')
+        ).then(changeValue(fieldName, fieldValue))
         break
 
       case 'servicemanSignature':
-        changeValue('servicemanSignatureDate', moment()).then(
-          changeValue(fieldName, fieldValue)
-        )
+        changeValue(
+          'servicemanSignatureDate',
+          moment().tz('America/Los_Angeles')
+        ).then(changeValue(fieldName, fieldValue))
         break
 
       default:
@@ -312,7 +321,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const addLogEntry = () => {
-    const date = moment().startOf('day')
+    const date = moment()
+      .tz('America/Los_Angeles')
     const remainder = 5 - (date.minute() % 5)
     const dateTime = moment(date).add(remainder, 'minutes')
     const logEntry = {
@@ -403,9 +413,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     let hours = 0
     if (report.logs[index].timeOff) {
       const timeOff = moment(report.logs[index].timeOff)
+      timeOff.year(timeOn.year())
+      timeOff.month(timeOn.month())
+      timeOff.date(timeOn.date())
       if (timeOff.isAfter(timeOn)) {
         const duration = moment.duration(timeOff.diff(timeOn))
-        hours = duration.asHours()
+        hours = Number(duration.asHours()).toFixed(2)
       }
     }
 
@@ -428,9 +441,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     let hours = 0
     if (report.logs[index].timeOn) {
       const timeOn = moment(report.logs[index].timeOn)
+      timeOn.year(timeOff.year())
+      timeOn.month(timeOff.month())
+      timeOn.date(timeOff.date())
       if (timeOff.isAfter(timeOn)) {
         const duration = moment.duration(timeOff.diff(timeOn))
-        hours = duration.asHours()
+        hours = Number(duration.asHours()).toFixed(2)
       }
     }
     const updated = {
@@ -585,7 +601,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
@@ -749,6 +764,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             <Grid item>
               <Typography style={{ margin: 6 }}>Materials Used</Typography>
               <Select
+                styles={selectStyles}
                 className='itemsSelect'
                 classNamePrefix='select'
                 isClearable={true}

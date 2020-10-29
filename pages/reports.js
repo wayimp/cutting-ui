@@ -16,7 +16,7 @@ import numeral from 'numeral'
 const priceFormat = '$0.00'
 import ReportCard from '../components/ReportCard'
 import { flatten } from 'lodash'
-import moment from 'moment'
+import moment from 'moment-timezone'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd MMMM DD, YYYY'
 import {
@@ -155,15 +155,15 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
     if (token && token.length > 0) {
       getData()
     } else {
-      //Router.push('/')
+      Router.push('/')
     }
-  }, [])
+  }, [reports])
 
   const createNew = async existing => {
     const newReport = {
       archived: false,
       job: '',
-      date: moment().startOf('day'),
+      date: moment().tz('America/Los_Angeles'),
       po: '',
       customerName: '',
       customerStreet: '',
@@ -202,7 +202,7 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
     const newReport = {
       archived: false,
       job: existing.job,
-      date: moment().startOf('day'),
+      date: moment().tz('America/Los_Angeles'),
       po: existing.po,
       customerName: existing.customerName,
       customerStreet: existing.customerStreet,
