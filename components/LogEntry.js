@@ -36,7 +36,6 @@ import MoreVertIcon from '@material-ui/icons/MoreVert'
 import moment from 'moment'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd h:mm a'
-import { getLangString } from '../components/Lang'
 import numeral from 'numeral'
 const priceFormat = '$0.00'
 

@@ -5,7 +5,6 @@ import { connect } from 'react-redux'
 import { compose } from 'redux'
 import { wrapper } from '../components/store'
 import { fade, makeStyles, useTheme } from '@material-ui/core/styles'
-import { getLangString } from '../components/Lang'
 import Link from '../src/Link'
 import TopBar from '../components/TopBar'
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline'
@@ -43,12 +42,6 @@ import {
   Fade,
   TextField
 } from '@material-ui/core'
-import {
-  Map as GoogleMap,
-  InfoWindow,
-  Marker,
-  GoogleApiWrapper
-} from 'google-maps-react'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
 
@@ -108,11 +101,9 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const Page = ({ dispatch, lang, cart, google, token }) => {
+const Page = ({ dispatch, token }) => {
   const classes = useStyles()
   const theme = useTheme()
-  const langSuffix = lang ? lang.substring(0, 2) : 'en'
-  const [open, setOpen] = React.useState(false)
   const [reports, setReports] = React.useState([])
   const { enqueueSnackbar } = useSnackbar()
 
@@ -143,21 +134,13 @@ const Page = ({ dispatch, lang, cart, google, token }) => {
     ? [...new Set(reportsSorted.map(report => report.daySubmitted))]
     : []
 
-  const handleOpen = () => {
-    setOpen(true)
-  }
-
-  const handleClose = () => {
-    setOpen(false)
-  }
-
   useEffect(() => {
     if (token && token.length > 0) {
       getData()
     } else {
       Router.push('/')
     }
-  }, [reports])
+  }, [])
 
   const createNew = async existing => {
     const newReport = {

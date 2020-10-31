@@ -6,7 +6,6 @@ import { fade, makeStyles, useTheme } from '@material-ui/core/styles'
 import Link from '../src/Link'
 import TopBar from '../components/TopBar'
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined'
-import { getLangString } from '../components/Lang'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
 import axiosClient from '../src/axiosClient'
@@ -68,21 +67,21 @@ const Login = ({ dispatch, lang, segment }) => {
             ? response.data.access_token
             : ''
         if (accessToken && accessToken.length > 0) {
-          enqueueSnackbar(getLangString('login.success', lang), {
+          enqueueSnackbar('User Logon Success', {
             variant: 'success'
           })
           cookie.set('token', accessToken)
           dispatch({ type: 'TOKEN', payload: accessToken })
-          Router.push('/reports')
+          Router.push('/users')
         } else {
-          enqueueSnackbar(getLangString('login.failure', lang), {
+          enqueueSnackbar('User Logon Failure', {
             variant: 'error'
           })
           Router.push('/')
         }
       })
       .catch(function (error) {
-        enqueueSnackbar(getLangString('login.failure', lang) + error, {
+        enqueueSnackbar('User Logon Failure: ' + error, {
           variant: 'error'
         })
         Router.push('/')
@@ -90,7 +89,7 @@ const Login = ({ dispatch, lang, segment }) => {
   }
 
   if (token) {
-    Router.push('/reports')
+    Router.push('/users')
   }
 
   return (
@@ -104,7 +103,7 @@ const Login = ({ dispatch, lang, segment }) => {
               <LockOutlinedIcon />
             </Avatar>
             <Typography component='h1' variant='h5'>
-              {getLangString('login.signIn', lang)}
+              User Sign In
             </Typography>
             <FormControl>
               <TextField
@@ -115,7 +114,7 @@ const Login = ({ dispatch, lang, segment }) => {
                 id='user'
                 name='user'
                 autoFocus
-                label={getLangString('login.username', lang)}
+                label='Username'
                 onChange={event => setUsername(event.target.value)}
               />
               <TextField
@@ -126,7 +125,7 @@ const Login = ({ dispatch, lang, segment }) => {
                 name='password'
                 type='password'
                 id='password'
-                label={getLangString('login.password', lang)}
+                label='Password'
                 onChange={event => setPassword(event.target.value)}
               />
               <Button
@@ -138,7 +137,7 @@ const Login = ({ dispatch, lang, segment }) => {
                 onClick={handleSubmit}
                 disabled={authenticating}
               >
-                {getLangString('login.signIn', lang)}
+                Sign In
               </Button>
             </FormControl>
           </div>

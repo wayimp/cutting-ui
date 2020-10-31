@@ -35,7 +35,6 @@ import DeleteIcon from '@material-ui/icons/Delete'
 import moment from 'moment-timezone'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd h:mm a'
-import { getLangString } from '../components/Lang'
 import numeral from 'numeral'
 const priceFormat = '$0.00'
 
