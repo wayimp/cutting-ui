@@ -139,6 +139,10 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 6,
     marginLeft: 16,
     padding: 6
+  },
+  iconButton: {
+    margin: -2,
+    padding: -2
   }
 }))
 
@@ -167,6 +171,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [reportEdit, setReportEdit] = useState({})
   const { enqueueSnackbar } = useSnackbar()
   const [addIssue, setAddIssue] = React.useState('')
+  const [itemNo, setItemNo] = React.useState('')
+  const [itemDesc, setItemDesc] = React.useState('')
 
   const onUnload = () => {
     updateReport(report)
@@ -203,14 +209,14 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       case 'customerSignature':
         changeValue(
           'customerSignatureDate',
-          moment().tz('America/Los_Angeles')
+          moment()//.tz('America/Los_Angeles')
         ).then(changeValue(fieldName, fieldValue))
         break
 
       case 'servicemanSignature':
         changeValue(
           'servicemanSignatureDate',
-          moment().tz('America/Los_Angeles')
+          moment()//.tz('America/Los_Angeles')
         ).then(changeValue(fieldName, fieldValue))
         break
 
@@ -246,6 +252,22 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       ...report,
       materials: [material].concat(report.materials)
     }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const addNewMaterial = () => {
+    const material = {
+      quantity: 1,
+      item: itemNo,
+      description: itemDesc
+    }
+    const updated = {
+      ...report,
+      materials: [material].concat(report.materials)
+    }
+    setItemNo('')
+    setItemDesc('')
     setReport(updated)
     updateReport(updated)
   }
@@ -321,8 +343,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const addLogEntry = () => {
-    const date = moment()
-      .tz('America/Los_Angeles')
+    const date = moment()//.tz('America/Los_Angeles')
     const remainder = 5 - (date.minute() % 5)
     const dateTime = moment(date).add(remainder, 'minutes')
     const logEntry = {
@@ -751,17 +772,16 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
-
-        <Grid
-          container
-          direction='row'
-          xs={12}
-          spacing={2}
-          justify='space-between'
-          className={classes.formGroup}
-        >
-          <Box width={1}>
-            <Grid item>
+        <Box width={1}>
+          <Grid
+            container
+            direction='row'
+            xs={12}
+            spacing={2}
+            justify='space-between'
+            className={classes.formGroup}
+          >
+            <Grid item xs={12}>
               <Typography style={{ margin: 6 }}>Materials Used</Typography>
               <Select
                 styles={selectStyles}
@@ -773,35 +793,64 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 name='items'
                 options={propsOptions}
               />
+            </Grid>
+            <Grid item xs={12} alignItems='center'>
+              <TextField
+                className={classes.textField}
+                variant='outlined'
+                name='itemNo'
+                label='Item Number'
+                value={itemNo}
+                onChange={event => setItemNo(event.target.value)}
+              />
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              <TextField
+                className={classes.textField}
+                variant='outlined'
+                name='itemDesc'
+                label='Item Description'
+                value={itemDesc}
+                onChange={event => setItemDesc(event.target.value)}
+              />
+              <IconButton
+                style={{ marginTop: 6 }}
+                onClick={() => addNewMaterial()}
+              >
+                <AddCircleOutlineIcon />
+              </IconButton>
+            </Grid>
+            <Grid item xs={12}>
               <List>
                 {report.materials.map((material, index) => (
                   <ListItem key={'material' + index}>
                     <ListItemAvatar>
-                      <Typography>{material.quantity.toString()}</Typography>
+                      <Grid
+                        container
+                        direction='row'
+                        justify='flex-start'
+                        alignItems='center'
+                        spacing={0}
+                      >
+                        <Typography>{material.quantity.toString()}</Typography>
+                        <IconButton onClick={() => addMaterial(index)}>
+                          <AddCircleOutlineIcon />
+                        </IconButton>
+                        <IconButton onClick={() => removeMaterial(index)}>
+                          <RemoveCircleOutlineIcon />
+                        </IconButton>
+                      </Grid>
                     </ListItemAvatar>
                     <ListItemText
                       edge='begin'
                       primary={`${material.item}`}
                       secondary={`${material.description}`}
                     />
-                    <ListItemSecondaryAction>
-                      <IconButton onClick={() => addMaterial(index)} edge='end'>
-                        <AddCircleOutlineIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => removeMaterial(index)}
-                        edge='end'
-                      >
-                        <RemoveCircleOutlineIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
                   </ListItem>
                 ))}
               </List>
             </Grid>
-          </Box>
-        </Grid>
-
+          </Grid>
+        </Box>
         <Grid
           container
           direction='row'
@@ -847,7 +896,10 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   onChange={changeAddIssue}
                   value={addIssue}
                 />
-                <IconButton onClick={() => addNewIssue()} edge='end'>
+                <IconButton
+                  onClick={() => addNewIssue()}
+                  style={{ marginTop: 6 }}
+                >
                   <AddCircleOutlineIcon />
                 </IconButton>
               </Box>
@@ -875,7 +927,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
-
         <Grid
           container
           direction='row'
@@ -885,11 +936,15 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           className={classes.formGroup}
         >
           <Box width={1}>
-            <Grid item>
-              <Typography style={{ margin: 6 }}>Log Entries</Typography>
-              <IconButton onClick={() => addLogEntry()} edge='end'>
-                <AddCircleOutlineIcon />
-              </IconButton>
+            <Grid direction='row' item xs={12}>
+              <Typography style={{ margin: 6 }}>
+                Log Entries
+                <IconButton onClick={() => addLogEntry()} edge='end'>
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </Typography>
+            </Grid>
+            <Grid>
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
                 <List dense={true}>
                   {report.logs.map((log, index) => (
@@ -1095,7 +1150,7 @@ export async function getServerSideProps (context) {
     const option = {
       type: item.Type,
       value: item.Item,
-      label: item.Description
+      label: item.Item + ': ' + item.Description
     }
     return option
   })

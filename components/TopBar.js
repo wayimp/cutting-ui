@@ -4,13 +4,16 @@ import Link from '../src/Link'
 import cookie from 'js-cookie'
 import MenuIcon from '@material-ui/icons/Menu'
 import SearchIcon from '@material-ui/icons/Search'
+import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount'
 import {
   AppBar,
   Toolbar,
   IconButton,
   Typography,
   InputBase,
-  Grid
+  Grid,
+  Box,
+  Tooltip
 } from '@material-ui/core'
 
 const useStyles = makeStyles(theme => ({
@@ -29,7 +32,8 @@ const useStyles = makeStyles(theme => ({
     display: 'none',
     [theme.breakpoints.up('sm')]: {
       display: 'block'
-    }
+    },
+    color: 'black'
   },
   search: {
     position: 'relative',
@@ -74,30 +78,49 @@ const useStyles = makeStyles(theme => ({
 
 export default function SearchAppBar () {
   const classes = useStyles()
+  const roles = cookie.get('roles')
 
   return (
     <div className={classes.root}>
       <AppBar position='static'>
         <Toolbar>
-          <Grid>
-            <Link
-              href='/'
-              className={classes.logo}
-              onClick={cookie.remove('token')}
-            >
-              <img
-                src='/images/valley-cutting-systems-logo.png'
-                alt='Valley Cutting Systems'
-                style={{ marginTop: 6 }}
-              />
-            </Link>
-          </Grid>
-          <Grid>
-            <Typography variant='h6' noWrap className={classes.title}>
-              Field Service Reports
-            </Typography>
-          </Grid>
-          {/*
+          <Box width={1}>
+            <Grid container direction='row' alignItems='center'>
+              <Grid item xs={5}>
+                <Link
+                  href='/'
+                  className={classes.logo}
+                  onClick={cookie.remove('token')}
+                >
+                  <img
+                    src='/images/valley-cutting-systems-logo.png'
+                    alt='Valley Cutting Systems'
+                    style={{ marginTop: 6 }}
+                  />
+                </Link>
+              </Grid>
+              <Grid item xs={6}>
+              <Link href='/reports'>
+                <Typography variant='h6' noWrap className={classes.title}>
+                  Field Service Reports
+                </Typography>
+                </Link>
+              </Grid>
+              <Grid item xs={1}>
+                {roles && roles.includes('admin') ? (
+                  <Tooltip title='Manage Users'>
+                    <IconButton>
+                      <Link href='/users'>
+                        <SupervisorAccountIcon color='secondary' />
+                      </Link>
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  ''
+                )}
+              </Grid>
+            </Grid>
+            {/*
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <SearchIcon />
@@ -112,6 +135,7 @@ export default function SearchAppBar () {
             />
           </div>
           */}
+          </Box>
         </Toolbar>
       </AppBar>
     </div>

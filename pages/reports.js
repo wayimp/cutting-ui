@@ -40,7 +40,10 @@ import {
   Modal,
   Backdrop,
   Fade,
-  TextField
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogActions
 } from '@material-ui/core'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
@@ -105,6 +108,8 @@ const Page = ({ dispatch, token }) => {
   const classes = useStyles()
   const theme = useTheme()
   const [reports, setReports] = React.useState([])
+  const [reportToDelete, setReportToDelete] = React.useState({})
+  const [confirmDelete, setConfirmDelete] = React.useState(false)
   const { enqueueSnackbar } = useSnackbar()
 
   const getData = () => {
@@ -141,6 +146,16 @@ const Page = ({ dispatch, token }) => {
       Router.push('/')
     }
   }, [])
+
+  const handleConfirmDeleteClose = () => {
+    setReportToDelete({})
+    setConfirmDelete(false)
+  }
+
+  const confirmDeleteReport = report => {
+    setReportToDelete(report)
+    setConfirmDelete(true)
+  }
 
   const createNew = async existing => {
     const newReport = {
@@ -240,8 +255,11 @@ const Page = ({ dispatch, token }) => {
       })
   }
 
-  const archiveReport = async report => {
-    report.archived = true
+  const archiveReport = async () => {
+    const report = {
+      ...reportToDelete,
+      archived: true
+    }
     await axiosClient({
       method: 'patch',
       url: '/reports',
@@ -259,6 +277,7 @@ const Page = ({ dispatch, token }) => {
           variant: 'error'
         })
       })
+    handleConfirmDeleteClose()
   }
 
   return (
@@ -293,7 +312,7 @@ const Page = ({ dispatch, token }) => {
                       key={report._id}
                       report={report}
                       copyToNew={copyToNew}
-                      archive={archiveReport}
+                      archive={confirmDeleteReport}
                     />
                   ))}
               </Grid>
@@ -301,6 +320,17 @@ const Page = ({ dispatch, token }) => {
           ))}
         </div>
       </main>
+      <Dialog open={confirmDelete} onClose={handleConfirmDeleteClose}>
+        <DialogTitle>{`Are you sure you want to delete this report?`}</DialogTitle>
+        <DialogActions>
+          <Button onClick={handleConfirmDeleteClose} color='primary'>
+            Cancel
+          </Button>
+          <Button onClick={archiveReport} color='secondary' autoFocus>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }

@@ -62,17 +62,21 @@ const Login = ({ dispatch, lang, segment }) => {
       .post('/token', body)
       .then(response => {
         setAuthenticating(false)
-        const accessToken =
-          response && response.data && response.data.access_token
-            ? response.data.access_token
-            : ''
+        let accessToken,
+          roles = ''
+        if (response && response.data) {
+          accessToken = response.data.access_token
+          roles = response.data.roles
+        }
         if (accessToken && accessToken.length > 0) {
           enqueueSnackbar('User Logon Success', {
             variant: 'success'
           })
           cookie.set('token', accessToken)
+          cookie.set('username', username)
+          cookie.set('roles', roles)
           dispatch({ type: 'TOKEN', payload: accessToken })
-          Router.push('/users')
+          Router.push('/reports')
         } else {
           enqueueSnackbar('User Logon Failure', {
             variant: 'error'

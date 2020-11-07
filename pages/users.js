@@ -11,6 +11,8 @@ import PersonIcon from '@material-ui/icons/Person'
 import PersonAddIcon from '@material-ui/icons/PersonAdd'
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount'
 import DeleteIcon from '@material-ui/icons/Delete'
+import SaveIcon from '@material-ui/icons/Save'
+import CancelIcon from '@material-ui/icons/Cancel'
 import numeral from 'numeral'
 const priceFormat = '$0.00'
 import ReportCard from '../components/ReportCard'
@@ -43,7 +45,12 @@ import {
   Backdrop,
   Fade,
   TextField,
-  IconButton
+  IconButton,
+  FormControlLabel,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogActions
 } from '@material-ui/core'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
@@ -94,13 +101,45 @@ const useStyles = makeStyles(theme => ({
   modal: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    margin: theme.spacing(2),
+    padding: theme.spacing(2),
+    width: '80%'
+  },
+  paper: {
+    backgroundColor: theme.palette.background.paper,
+    border: '2px solid #000',
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 4, 3)
+  },
+  field: {
+    margin: 0,
+    padding: 0
+  },
+  iconButton: {
+    padding: 0,
+    margin: 0
   },
   section: {
     backgroundColor: '#EEF',
     border: '1px solid #AAA',
     margin: '5px',
     padding: '8px'
+  },
+  textField: {
+    margin: 2,
+    padding: 2
+  },
+  textFieldWide: {
+    width: '100%',
+    margin: 2,
+    padding: 2
+  },
+  checkbox: {
+    marginTop: 6,
+    marginBottom: 6,
+    marginLeft: 16,
+    padding: 6
   }
 }))
 
@@ -108,7 +147,10 @@ const Page = ({ dispatch, token }) => {
   const classes = useStyles()
   const theme = useTheme()
   const [open, setOpen] = React.useState(false)
+  const [user, setUser] = React.useState({})
+  const [userToDelete, setUserToDelete] = React.useState({})
   const [users, setUsers] = React.useState([])
+  const [confirmDelete, setConfirmDelete] = React.useState(false)
   const { enqueueSnackbar } = useSnackbar()
 
   const getData = () => {
@@ -131,22 +173,45 @@ const Page = ({ dispatch, token }) => {
     setOpen(false)
   }
 
+  const handleConfirmDeleteClose = () => {
+    setUserToDelete({})
+    setConfirmDelete(false)
+  }
+
+  const confirmUserToDelete = user => {
+    setUserToDelete(user)
+    setConfirmDelete(true)
+  }
+
   useEffect(() => {
-    if (token && token.length > 0) {
+    const roles = cookie.get('roles')
+    if (token && token.length > 0 && roles && roles.includes('admin')) {
       getData()
     } else {
-      //Router.push('/')
+      Router.push('/')
     }
   }, [])
 
-  const createNew = async existing => {
-    const newUser = {
-      username: '',
-      password: '',
-      roles: ''
+  const changeValue = async (name, value) => {
+    const updated = {
+      ...user,
+      [name]: value
     }
+    setUser(updated)
+  }
 
-    createUser(newUser)
+  const changeField = event => {
+    const fieldName = event.target.name
+    const fieldValue = event.target.value
+    changeValue(fieldName, fieldValue)
+  }
+
+  const changeCheckbox = event => {
+    const updated = {
+      ...user,
+      [event.target.name]: event.target.checked ? 'admin' : ''
+    }
+    setUser(updated)
   }
 
   const createUser = async user => {
@@ -167,26 +232,31 @@ const Page = ({ dispatch, token }) => {
           variant: 'error'
         })
       })
+    handleClose()
   }
 
-  const deleteUser = async user => {
-    await axiosClient({
-      method: 'delete',
-      url: `/users/${user._id}`,
-      data: user,
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(response => {
-        enqueueSnackbar('User Deleted', {
-          variant: 'success'
-        })
-        getData()
+  const deleteUser = async () => {
+    const user = userToDelete
+    if (user) {
+      await axiosClient({
+        method: 'delete',
+        url: `/users/${user._id}`,
+        data: user,
+        headers: { Authorization: `Bearer ${token}` }
       })
-      .catch(error => {
-        enqueueSnackbar('Error Deleting User: ' + error, {
-          variant: 'error'
+        .then(response => {
+          enqueueSnackbar('User Deleted', {
+            variant: 'success'
+          })
+          getData()
         })
-      })
+        .catch(error => {
+          enqueueSnackbar('Error Deleting User: ' + error, {
+            variant: 'error'
+          })
+        })
+    }
+    handleConfirmDeleteClose()
   }
 
   return (
@@ -199,7 +269,7 @@ const Page = ({ dispatch, token }) => {
             variant='contained'
             color='secondary'
             style={{ margin: 20 }}
-            onClick={createNew}
+            onClick={handleOpen}
             startIcon={<PersonAddIcon />}
           >
             New User
@@ -221,7 +291,10 @@ const Page = ({ dispatch, token }) => {
                     </ListItemAvatar>
                     <ListItemText edge='begin' primary={`${user.username}`} />
                     <ListItemSecondaryAction>
-                      <IconButton onClick={() => deleteUser(user)} edge='end'>
+                      <IconButton
+                        onClick={() => confirmUserToDelete(user)}
+                        edge='end'
+                      >
                         <DeleteIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -232,6 +305,90 @@ const Page = ({ dispatch, token }) => {
           </Box>
         </div>
       </main>
+      <Modal
+        id='items'
+        className={classes.modal}
+        open={open}
+        onClose={handleClose}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500
+        }}
+      >
+        <Fade in={open}>
+          <div className={classes.paper}>
+            <Grid container spacing={1} justify='space-between'>
+              <Grid item xs={12}>
+                <TextField
+                  className={classes.textField}
+                  variant='outlined'
+                  name='username'
+                  label='User Name'
+                  onChange={changeField}
+                />
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <TextField
+                  className={classes.textField}
+                  variant='outlined'
+                  name='password'
+                  label='Password'
+                  onChange={changeField}
+                />
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      className={classes.checkbox}
+                      checked={user.roles && user.roles.includes('admin')}
+                      onChange={changeCheckbox}
+                      name='roles'
+                      color='primary'
+                    />
+                  }
+                  label='Admin'
+                />
+              </Grid>
+              <Grid
+                container
+                direction='row'
+                justify='flex-end'
+                alignItems='flex-end'
+              >
+                <Button
+                  variant='contained'
+                  color='primary'
+                  style={{ margin: 10 }}
+                  onClick={handleClose}
+                  startIcon={<CancelIcon />}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant='contained'
+                  color='secondary'
+                  style={{ margin: 10 }}
+                  onClick={() => createUser(user)}
+                  startIcon={<SaveIcon />}
+                >
+                  Create
+                </Button>
+              </Grid>
+            </Grid>
+          </div>
+        </Fade>
+      </Modal>
+      <Dialog open={confirmDelete} onClose={handleConfirmDeleteClose}>
+        <DialogTitle>{`Are you sure you want to delete ${user.username}?`}</DialogTitle>
+        <DialogActions>
+          <Button onClick={handleConfirmDeleteClose} color='primary'>
+            Cancel
+          </Button>
+          <Button onClick={deleteUser} color='secondary' autoFocus>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }
