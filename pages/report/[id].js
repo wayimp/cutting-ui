@@ -158,7 +158,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [itemDesc, setItemDesc] = React.useState('')
 
   const onUnload = () => {
-    //updateReport(report)
+    updateReport(report)
   }
 
   useEffect(() => {
@@ -197,23 +197,25 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     // Beware race condition when updating two fields at once
     switch (fieldName) {
       case 'customerSignature':
-        changeValue(
-          'customerSignatureDate',
-          moment() //.tz('America/Los_Angeles')
-        ).then(changeValue(fieldName, fieldValue))
+        setTimeout(
+          () =>
+            changeValue('customerSignatureDate', moment().format('MM/DD/YYYY')),
+          3000
+        )
         break
 
       case 'servicemanSignature':
-        changeValue(
-          'servicemanSignatureDate',
-          moment() //.tz('America/Los_Angeles')
-        ).then(changeValue(fieldName, fieldValue))
-        break
-
-      default:
-        changeValue(fieldName, fieldValue)
+        setTimeout(
+          () =>
+            changeValue(
+              'servicemanSignatureDate',
+              moment().format('MM/DD/YYYY')
+            ),
+          3000
+        )
         break
     }
+    changeValue(fieldName, fieldValue)
   }
 
   const blurField = event => {
@@ -337,7 +339,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const addLogEntry = () => {
-    const date = moment() //.tz('America/Los_Angeles')
+    const date = moment().tz('America/Los_Angeles')
     const remainder = 5 - (date.minute() % 5)
     const dateTime = moment(date).add(remainder, 'minutes')
     const logEntry = {

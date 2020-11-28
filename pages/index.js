@@ -92,10 +92,6 @@ const Login = ({ dispatch, lang, segment }) => {
       })
   }
 
-  if (token) {
-    Router.push('/users')
-  }
-
   return (
     <Container>
       <TopBar />

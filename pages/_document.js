@@ -8,19 +8,16 @@ export default class MyDocument extends Document {
     return (
       <Html lang='en'>
         <Head>
-          {/* PWA primary color */}
           <meta name='theme-color' content={theme.palette.primary.main} />
           <link
             rel='stylesheet'
             href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap'
           />
-          {/*
           <link
             href='https://db.onlinewebfonts.com/c/769b81072225af8e25ab6172c4ed4e33?family=FFX+Handwriting'
             rel='stylesheet'
             type='text/css'
           />
-          */}
         </Head>
         <body>
           <Main />

@@ -10,6 +10,7 @@ import TopBar from '../components/TopBar'
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline'
 import AddLocationIcon from '@material-ui/icons/AddLocation'
 import LocationOnIcon from '@material-ui/icons/LocationOn'
+import SearchIcon from '@material-ui/icons/Search'
 import SendIcon from '@material-ui/icons/Send'
 import numeral from 'numeral'
 const priceFormat = '$0.00'
@@ -45,7 +46,10 @@ import {
   TextField,
   Dialog,
   DialogTitle,
-  DialogActions
+  DialogActions,
+  OutlinedInput,
+  InputAdornment,
+  IconButton
 } from '@material-ui/core'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
@@ -116,13 +120,16 @@ const Page = ({ dispatch, token }) => {
   const classes = useStyles()
   const theme = useTheme()
   const [reports, setReports] = React.useState([])
+  const [sorted, setSorted] = React.useState([])
+  const [days, setDays] = React.useState([])
   const [reportToDelete, setReportToDelete] = React.useState({})
   const [confirmDelete, setConfirmDelete] = React.useState(false)
   const { enqueueSnackbar } = useSnackbar()
   const [showClosed, setShowClosed] = React.useState(false)
+  const [search, setSearch] = React.useState('')
 
-  const getData = (sc) => {
-    const url = sc ? '/reports?showClosed=true' : '/reports'
+  const getData = sc => {
+    const url = sc === true ? '/reports?showClosed=true' : '/reports'
     axiosClient({
       method: 'get',
       url,
@@ -131,29 +138,52 @@ const Page = ({ dispatch, token }) => {
       const result =
         response.data && Array.isArray(response.data) ? response.data : []
       setReports(result)
+      sortReports(result, search)
     })
   }
 
   const changeShowClosed = () => {
     const newValue = !showClosed
-    setShowClosed(newValue)
     getData(newValue)
+    setShowClosed(newValue)
   }
 
-  const reportsSorted = reports
-    .map(report => ({
-      ...report,
-      daySubmitted: moment(report.date, dateFormat).format(dateDisplay)
-    }))
-    .sort(function (a, b) {
-      const dateA = new Date(a.date),
-        dateB = new Date(b.date)
-      return dateB - dateA
-    })
+  const searchReports = event => {
+    const fieldName = event.target.name
+    const fieldValue = event.target.value
+    setSearch(fieldValue)
+    sortReports(reports, fieldValue)
+  }
 
-  const days = Array.isArray(reportsSorted)
-    ? [...new Set(reportsSorted.map(report => report.daySubmitted))]
-    : []
+  const sortReports = (unsorted, searchString) => {
+    let reportsSorted = unsorted
+      .map(report => ({
+        ...report,
+        daySubmitted: moment(report.date, dateFormat).format(dateDisplay)
+      }))
+      .sort(function (a, b) {
+        const dateA = new Date(a.date),
+          dateB = new Date(b.date)
+        return dateB - dateA
+      })
+
+    if (searchString && searchString.length > 0) {
+      reportsSorted = reportsSorted.filter(report => {
+        if (
+          report.customerName &&
+          report.customerName.toLowerCase().includes(searchString.toLowerCase())
+        )
+          return report
+      })
+    }
+
+    const days = Array.isArray(reportsSorted)
+      ? [...new Set(reportsSorted.map(report => report.daySubmitted))]
+      : []
+
+    setSorted(reportsSorted)
+    setDays(days)
+  }
 
   useEffect(() => {
     if (token && token.length > 0) {
@@ -302,27 +332,44 @@ const Page = ({ dispatch, token }) => {
       <main className={classes.content}>
         <div className={classes.toolbar} />
         <div className={classes.root}>
-          <Button
-            variant='contained'
-            color='secondary'
-            style={{ margin: 20 }}
-            onClick={createNew}
-            startIcon={<AddCircleOutlineIcon />}
-          >
-            New Report
-          </Button>
-          <FormControlLabel
-            control={
-              <Checkbox
-                className={classes.checkbox}
-                checked={showClosed}
-                onChange={changeShowClosed}
-                name='showClosed'
-                color='secondary'
+          <Grid container direction='row' justify='center' alignItems='center'>
+            <FormControl variant='outlined'>
+              <InputLabel>Search</InputLabel>
+              <OutlinedInput
+                id='search'
+                value={search}
+                onChange={searchReports}
+                startAdornment={
+                  <InputAdornment position='start'>
+                    <SearchIcon />
+                  </InputAdornment>
+                }
+                labelWidth={70}
               />
-            }
-            label='Show Closed'
-          />
+            </FormControl>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  className={classes.checkbox}
+                  checked={showClosed}
+                  onChange={changeShowClosed}
+                  name='showClosed'
+                  color='secondary'
+                />
+              }
+              label='Show Closed'
+            />
+            <Button
+              variant='contained'
+              color='secondary'
+              style={{ margin: 20 }}
+              onClick={createNew}
+              startIcon={<AddCircleOutlineIcon />}
+            >
+              New Report
+            </Button>
+          </Grid>
+
           {days.map(day => (
             <Card key={day} className={classes.section}>
               <h3>{day}</h3>
@@ -333,7 +380,7 @@ const Page = ({ dispatch, token }) => {
                 justify='flex-start'
                 alignItems='flex-start'
               >
-                {reportsSorted
+                {sorted
                   .filter(report => report.daySubmitted === day)
                   .map(report => (
                     <ReportCard
