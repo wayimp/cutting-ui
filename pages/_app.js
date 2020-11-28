@@ -2,14 +2,11 @@ import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Head from 'next/head'
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles'
-import { enUS } from '@material-ui/core/locale'
-import { esES } from '@material-ui/core/locale'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import theme from '../src/theme'
 import App from 'next/app'
 import { wrapper } from '../components/store'
 import { SnackbarProvider } from 'notistack'
-import './main.css'
 
 class cuttingApp extends App {
   getInitialProps = async ({ Component, ctx }) => {

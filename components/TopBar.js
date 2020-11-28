@@ -1,5 +1,6 @@
 import React from 'react'
 import { fade, makeStyles } from '@material-ui/core/styles'
+import { useRouter } from 'next/router'
 import Link from '../src/Link'
 import cookie from 'js-cookie'
 import MenuIcon from '@material-ui/icons/Menu'
@@ -79,6 +80,7 @@ const useStyles = makeStyles(theme => ({
 export default function SearchAppBar () {
   const classes = useStyles()
   const roles = cookie.get('roles')
+  const router = useRouter()
 
   return (
     <div className={classes.root}>
@@ -100,19 +102,15 @@ export default function SearchAppBar () {
                 </Link>
               </Grid>
               <Grid item xs={6}>
-              <Link href='/reports'>
                 <Typography variant='h6' noWrap className={classes.title}>
-                  Field Service Reports
+                  <Link href='/reports'>Field Service Reports</Link>
                 </Typography>
-                </Link>
               </Grid>
               <Grid item xs={1}>
                 {roles && roles.includes('admin') ? (
                   <Tooltip title='Manage Users'>
-                    <IconButton>
-                      <Link href='/users'>
-                        <SupervisorAccountIcon color='secondary' />
-                      </Link>
+                    <IconButton onClick={() => router.push('/users')}>
+                      <SupervisorAccountIcon color='secondary' />
                     </IconButton>
                   </Tooltip>
                 ) : (

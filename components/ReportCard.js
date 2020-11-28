@@ -105,7 +105,7 @@ const ReportCard = ({ report, copyToNew, archive }) => {
         <Typography variant='h5' color='textSecondary'>
           {report.customerName}
         </Typography>
-        <Typography variant='p' color='textSecondary'>
+        <Typography variant='body1' color='textSecondary'>
           {report.reportedTrouble}
         </Typography>
       </CardContent>

@@ -36,7 +36,9 @@ import {
   InputLabel,
   Input,
   FormHelperText,
+  FormControlLabel,
   Button,
+  Checkbox,
   Modal,
   Backdrop,
   Fade,
@@ -101,6 +103,12 @@ const useStyles = makeStyles(theme => ({
     border: '1px solid #AAA',
     margin: '5px',
     padding: '8px'
+  },
+  checkbox: {
+    marginTop: 6,
+    marginBottom: 6,
+    marginLeft: 16,
+    padding: 6
   }
 }))
 
@@ -111,17 +119,25 @@ const Page = ({ dispatch, token }) => {
   const [reportToDelete, setReportToDelete] = React.useState({})
   const [confirmDelete, setConfirmDelete] = React.useState(false)
   const { enqueueSnackbar } = useSnackbar()
+  const [showClosed, setShowClosed] = React.useState(false)
 
-  const getData = () => {
+  const getData = (sc) => {
+    const url = sc ? '/reports?showClosed=true' : '/reports'
     axiosClient({
       method: 'get',
-      url: '/reports',
+      url,
       headers: { Authorization: `Bearer ${token}` }
     }).then(response => {
       const result =
         response.data && Array.isArray(response.data) ? response.data : []
       setReports(result)
     })
+  }
+
+  const changeShowClosed = () => {
+    const newValue = !showClosed
+    setShowClosed(newValue)
+    getData(newValue)
   }
 
   const reportsSorted = reports
@@ -141,7 +157,7 @@ const Page = ({ dispatch, token }) => {
 
   useEffect(() => {
     if (token && token.length > 0) {
-      getData()
+      getData(showClosed)
     } else {
       Router.push('/')
     }
@@ -246,7 +262,7 @@ const Page = ({ dispatch, token }) => {
         enqueueSnackbar('New Report Created', {
           variant: 'success'
         })
-        getData()
+        getData(showClosed)
       })
       .catch(error => {
         enqueueSnackbar('Error Creating Report: ' + error, {
@@ -270,7 +286,7 @@ const Page = ({ dispatch, token }) => {
         enqueueSnackbar('Report Archived', {
           variant: 'success'
         })
-        getData()
+        getData(showClosed)
       })
       .catch(error => {
         enqueueSnackbar('Error Archiving Report: ' + error, {
@@ -295,6 +311,18 @@ const Page = ({ dispatch, token }) => {
           >
             New Report
           </Button>
+          <FormControlLabel
+            control={
+              <Checkbox
+                className={classes.checkbox}
+                checked={showClosed}
+                onChange={changeShowClosed}
+                name='showClosed'
+                color='secondary'
+              />
+            }
+            label='Show Closed'
+          />
           {days.map(day => (
             <Card key={day} className={classes.section}>
               <h3>{day}</h3>

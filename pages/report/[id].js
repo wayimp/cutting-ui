@@ -146,28 +146,11 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const itemsAvailable = [
-  {
-    quantity: 1,
-    itemNo: '1',
-    itemName: 'one'
-  },
-  {
-    quantity: 1,
-    itemNo: '2',
-    itemName: 'two'
-  },
-  {
-    quantity: 1,
-    itemNo: '3',
-    itemName: 'three'
-  }
-]
-
 const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const classes = useStyles()
   const theme = useTheme()
   const [report, setReport] = React.useState(propsReport)
+  const [readOnly, setReadOnly] = React.useState(true)
   const [reportEdit, setReportEdit] = useState({})
   const { enqueueSnackbar } = useSnackbar()
   const [addIssue, setAddIssue] = React.useState('')
@@ -175,16 +158,23 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [itemDesc, setItemDesc] = React.useState('')
 
   const onUnload = () => {
-    updateReport(report)
+    //updateReport(report)
   }
 
   useEffect(() => {
     document.title = report.customerName
+
+    if (report.customerSignatureDate) {
+      setReadOnly(true)
+    } else {
+      setReadOnly(false)
+    }
+
     window.addEventListener('unload', onUnload)
     return () => {
       window.removeEventListener('unload', onUnload)
     }
-  })
+  }, [])
 
   const changeValue = async (name, value) => {
     const updated = {
@@ -209,14 +199,14 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       case 'customerSignature':
         changeValue(
           'customerSignatureDate',
-          moment()//.tz('America/Los_Angeles')
+          moment() //.tz('America/Los_Angeles')
         ).then(changeValue(fieldName, fieldValue))
         break
 
       case 'servicemanSignature':
         changeValue(
           'servicemanSignatureDate',
-          moment()//.tz('America/Los_Angeles')
+          moment() //.tz('America/Los_Angeles')
         ).then(changeValue(fieldName, fieldValue))
         break
 
@@ -227,7 +217,9 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const blurField = event => {
-    updateReport(report)
+    if (!readOnly) {
+      updateReport(report)
+    }
   }
 
   const changeCheckbox = event => {
@@ -257,19 +249,21 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const addNewMaterial = () => {
-    const material = {
-      quantity: 1,
-      item: itemNo,
-      description: itemDesc
+    if (itemNo || itemDesc) {
+      const material = {
+        quantity: 1,
+        item: itemNo,
+        description: itemDesc
+      }
+      const updated = {
+        ...report,
+        materials: [material].concat(report.materials)
+      }
+      setItemNo('')
+      setItemDesc('')
+      setReport(updated)
+      updateReport(updated)
     }
-    const updated = {
-      ...report,
-      materials: [material].concat(report.materials)
-    }
-    setItemNo('')
-    setItemDesc('')
-    setReport(updated)
-    updateReport(updated)
   }
 
   const addMaterial = index => {
@@ -343,7 +337,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const addLogEntry = () => {
-    const date = moment()//.tz('America/Los_Angeles')
+    const date = moment() //.tz('America/Los_Angeles')
     const remainder = 5 - (date.minute() % 5)
     const dateTime = moment(date).add(remainder, 'minutes')
     const logEntry = {
@@ -514,6 +508,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               className={classes.textField}
               name='job'
               label='Job#'
+              disabled={readOnly}
               defaultValue={report.job ? report.job : ''}
               onChange={changeField}
               onBlur={blurField}
@@ -531,6 +526,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 value={report.date}
                 onChange={changeDate}
                 onBlur={blurField}
+                disabled={readOnly}
               />
             </MuiPickersUtilsProvider>
           </Grid>
@@ -542,6 +538,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.po ? report.po : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
         </Grid>
@@ -561,6 +558,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.customerName ? report.customerName : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -572,6 +570,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.customerStreet ? report.customerStreet : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -583,6 +582,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.customerCity ? report.customerCity : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -594,6 +594,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.customerState ? report.customerState : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -605,6 +606,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.customerZip ? report.customerZip : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -616,6 +618,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.customerPhone ? report.customerPhone : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
         </Grid>
@@ -635,6 +638,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.machineType ? report.machineType : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
@@ -645,6 +649,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.machineSerial ? report.machineSerial : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -656,6 +661,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.control ? report.control : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
@@ -666,6 +672,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.controlSerial ? report.controlSerial : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -677,6 +684,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.plasmaType ? report.plasmaType : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
@@ -687,6 +695,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.plasmaModel ? report.plasmaModel : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
@@ -697,6 +706,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.plasmaSerial ? report.plasmaSerial : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
@@ -708,6 +718,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.torches ? report.torches : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <FormControlLabel
@@ -718,6 +729,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   onChange={changeCheckbox}
                   name='oxyFuel'
                   color='primary'
+                  disabled={readOnly}
                 />
               }
               label='Oxy Fuel'
@@ -733,6 +745,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.drive ? report.drive : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
@@ -743,6 +756,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={report.driveSerial ? report.driveSerial : ''}
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
         </Grid>
@@ -750,7 +764,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
@@ -768,6 +781,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 }
                 onChange={changeField}
                 onBlur={blurField}
+                disabled={readOnly}
               />
             </Grid>
           </Box>
@@ -776,7 +790,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           <Grid
             container
             direction='row'
-            xs={12}
             spacing={2}
             justify='space-between'
             className={classes.formGroup}
@@ -792,9 +805,10 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 onChange={selectMaterialOption}
                 name='items'
                 options={propsOptions}
+                isDisabled={readOnly}
               />
             </Grid>
-            <Grid item xs={12} alignItems='center'>
+            <Grid item xs={12}>
               <TextField
                 className={classes.textField}
                 variant='outlined'
@@ -802,6 +816,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 label='Item Number'
                 value={itemNo}
                 onChange={event => setItemNo(event.target.value)}
+                disabled={readOnly}
               />
               &nbsp;&nbsp;&nbsp;&nbsp;
               <TextField
@@ -811,10 +826,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 label='Item Description'
                 value={itemDesc}
                 onChange={event => setItemDesc(event.target.value)}
+                disabled={readOnly}
               />
               <IconButton
                 style={{ marginTop: 6 }}
                 onClick={() => addNewMaterial()}
+                disabled={readOnly}
               >
                 <AddCircleOutlineIcon />
               </IconButton>
@@ -832,10 +849,16 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                         spacing={0}
                       >
                         <Typography>{material.quantity.toString()}</Typography>
-                        <IconButton onClick={() => addMaterial(index)}>
+                        <IconButton
+                          onClick={() => addMaterial(index)}
+                          disabled={readOnly}
+                        >
                           <AddCircleOutlineIcon />
                         </IconButton>
-                        <IconButton onClick={() => removeMaterial(index)}>
+                        <IconButton
+                          onClick={() => removeMaterial(index)}
+                          disabled={readOnly}
+                        >
                           <RemoveCircleOutlineIcon />
                         </IconButton>
                       </Grid>
@@ -854,7 +877,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
@@ -872,6 +894,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 }
                 onChange={changeField}
                 onBlur={blurField}
+                disabled={readOnly}
               />
             </Grid>
           </Box>
@@ -880,7 +903,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
@@ -895,10 +917,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   label='Add Issue'
                   onChange={changeAddIssue}
                   value={addIssue}
+                  disabled={readOnly}
                 />
                 <IconButton
                   onClick={() => addNewIssue()}
                   style={{ marginTop: 6 }}
+                  disabled={readOnly}
                 >
                   <AddCircleOutlineIcon />
                 </IconButton>
@@ -917,7 +941,11 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   >
                     <ListItemText primary={`${issue.description}`} />
                     <ListItemSecondaryAction>
-                      <IconButton onClick={() => removeIssue(index)} edge='end'>
+                      <IconButton
+                        onClick={() => removeIssue(index)}
+                        edge='end'
+                        disabled={readOnly}
+                      >
                         <RemoveCircleOutlineIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -929,17 +957,19 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         </Grid>
         <Grid
           container
-          direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
         >
           <Box width={1}>
-            <Grid direction='row' item xs={12}>
+            <Grid item xs={12}>
               <Typography style={{ margin: 6 }}>
                 Log Entries
-                <IconButton onClick={() => addLogEntry()} edge='end'>
+                <IconButton
+                  onClick={() => addLogEntry()}
+                  edge='end'
+                  disabled={readOnly}
+                >
                   <AddCircleOutlineIcon />
                 </IconButton>
               </Typography>
@@ -953,7 +983,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                         <Grid
                           container
                           direction='row'
-                          xs={12}
                           spacing={2}
                           justify='space-between'
                           className={classes.formGroup}
@@ -969,6 +998,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                               onChange={date =>
                                 handleLogDateChange(index, date)
                               }
+                              disabled={readOnly}
                             />
                           </Grid>
                           <Grid item>
@@ -983,6 +1013,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                               onChange={date =>
                                 handleLogTimeOnChange(index, date)
                               }
+                              disabled={readOnly}
                             />
                           </Grid>
                           <Grid item>
@@ -1000,6 +1031,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                               helperText={
                                 log.hours ? 'Total hours: ' + log.hours : ''
                               }
+                              disabled={readOnly}
                             />
                           </Grid>
                           <Grid item>
@@ -1010,6 +1042,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                               onChange={event =>
                                 changeLogMileage(index, event.target.value)
                               }
+                              disabled={readOnly}
                             />
                           </Grid>
                           <Grid item>
@@ -1021,6 +1054,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                                   onChange={() => changeLogLodging(index)}
                                   name='lodging'
                                   color='primary'
+                                  disabled={readOnly}
                                 />
                               }
                               label='Lodging'
@@ -1035,6 +1069,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                                   onChange={() => changeLogToll(index)}
                                   name='toll'
                                   color='primary'
+                                  disabled={readOnly}
                                 />
                               }
                               label='Toll'
@@ -1046,6 +1081,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                         <IconButton
                           onClick={() => removeLogEntry(index)}
                           edge='end'
+                          disabled={readOnly}
                         >
                           <RemoveCircleOutlineIcon />
                         </IconButton>
@@ -1060,7 +1096,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         <Grid
           container
           direction='row'
-          xs={12}
           spacing={2}
           justify='space-between'
           className={classes.formGroup}
@@ -1074,6 +1109,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   onChange={changeCheckbox}
                   name='completed'
                   color='primary'
+                  disabled={readOnly}
                 />
               }
               label='Job Completed'
@@ -1097,6 +1133,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               }
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
           <Grid item>
@@ -1108,6 +1145,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   onChange={changeCheckbox}
                   name='satisfaction'
                   color='primary'
+                  disabled={readOnly}
                 />
               }
               label='Has the job been completed to your satisfaction?'
@@ -1129,6 +1167,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               }
               onChange={changeField}
               onBlur={blurField}
+              disabled={readOnly}
             />
           </Grid>
         </Grid>
