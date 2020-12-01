@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { fade, makeStyles } from '@material-ui/core/styles'
 import { useRouter } from 'next/router'
 import Link from '../src/Link'
@@ -38,8 +38,12 @@ const useStyles = makeStyles(theme => ({
 
 export default function SearchAppBar () {
   const classes = useStyles()
-  const roles = cookie.get('roles')
   const router = useRouter()
+  let roles
+
+  useEffect(() => {
+    roles = cookie.get('roles')
+  }, [])
 
   const reset = () => {
     cookie.remove('token')
@@ -74,7 +78,7 @@ export default function SearchAppBar () {
                     </IconButton>
                   </Tooltip>
                 ) : (
-                  ''
+                  <span />
                 )}
               </Grid>
             </Grid>

@@ -149,7 +149,6 @@ const Page = ({ dispatch, token }) => {
   }
 
   const searchReports = event => {
-    const fieldName = event.target.name
     const fieldValue = event.target.value
     setSearch(fieldValue)
     sortReports(reports, fieldValue)

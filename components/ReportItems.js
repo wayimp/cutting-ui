@@ -91,6 +91,7 @@ const ReportItems = ({
           <Grid container spacing={1} justify='space-between'>
             <Grid item xs={12}>
               <Select
+              id='items'
                 className='itemsSelect'
                 classNamePrefix='select'
                 isClearable={true}

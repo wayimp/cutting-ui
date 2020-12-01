@@ -6,6 +6,7 @@ import { flatten } from 'lodash'
 import { fade, makeStyles, useTheme } from '@material-ui/core/styles'
 import Link from '../../src/Link'
 import TopBar from '../../components/TopBar'
+import TabPanel from '../../components/TabPanel'
 import numeral from 'numeral'
 const priceFormat = '$0.00'
 import moment from 'moment-timezone'
@@ -29,7 +30,14 @@ import {
   TableRow,
   Button,
   FormControlLabel,
-  IconButton
+  IconButton,
+  AppBar,
+  Tabs,
+  Tab,
+  Modal,
+  GridList,
+  GridListTile,
+  GridListTileBar
 } from '@material-ui/core'
 /*
 import {
@@ -54,6 +62,14 @@ import {
   DatePicker
 } from '@material-ui/pickers'
 import Select from 'react-select'
+import Webcam from 'react-webcam'
+import AWS from 'aws-sdk'
+const spacesEndpoint = new AWS.Endpoint(process.env.SPACES_ENDPOINT)
+const s3 = new AWS.S3({
+  endpoint: process.env.SPACES_ENDPOINT,
+  accessKeyId: process.env.SPACES_KEY,
+  secretAccessKey: process.env.SPACES_SECRET
+})
 
 const selectStyles = {
   menu: base => ({
@@ -143,6 +159,31 @@ const useStyles = makeStyles(theme => ({
   iconButton: {
     margin: -2,
     padding: -2
+  },
+  tabPanel: {
+    border: 1,
+    backgroundColor: theme.palette.background.paper
+  },
+  img: {
+    border: 1,
+    margin: 5
+  },
+  gridListRoot: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    backgroundColor: theme.palette.background.paper
+  },
+  gridList: {
+    width: 640,
+    height: 533,
+    transform: 'translateZ(0)'
+  },
+  titleBar: {
+    background:
+      'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, ' +
+      'rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)'
   }
 }))
 
@@ -156,9 +197,53 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [addIssue, setAddIssue] = React.useState('')
   const [itemNo, setItemNo] = React.useState('')
   const [itemDesc, setItemDesc] = React.useState('')
+  const [selectedTab, setSelectedTab] = React.useState(0)
+  const [openWebcam, setOpenWebcam] = React.useState(false)
+
+  let webcamRef
+  const setRef = webcam => {
+    webcamRef = webcam
+  }
+
+  const capture = async () => {
+    try {
+      const imageSrc = webcamRef.getScreenshot()
+      addPhoto(imageSrc)
+      handleCloseWebcam()
+    } catch (err) {
+      alert('err' + err)
+    }
+  }
+
+  const addPhoto = src => {
+    const photos = report.photos ? report.photos : []
+    const updated = {
+      ...report,
+      photos: photos.concat(src)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const removePhoto = index => {
+    const photos = report.photos.map((photo, i) => {
+      if (i !== index) return photo
+    })
+
+    const updated = {
+      ...report,
+      photos
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
 
   const onUnload = () => {
     updateReport(report)
+  }
+
+  const handleCloseWebcam = () => {
+    setOpenWebcam(false)
   }
 
   useEffect(() => {
@@ -761,6 +846,77 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               disabled={readOnly}
             />
           </Grid>
+          <AppBar position='static' color='default'>
+            <Tabs
+              value={selectedTab}
+              onChange={(event, newValue) => {
+                setSelectedTab(newValue)
+              }}
+              indicatorColor='primary'
+              textColor='primary'
+              variant='scrollable'
+              scrollButtons='auto'
+            >
+              <Tab label='Item One' value={0} />
+              <Tab label='Item Two' value={1} />
+              <Tab label='Item Three' value={2} />
+              <Tab label='Item Four' value={3} />
+              <Tab label='Item Five' value={4} />
+              <Tab label='Item Six' value={5} />
+              <Tab label='Item Seven' value={6} />
+            </Tabs>
+          </AppBar>
+          <Box width={1}>
+            <TabPanel
+              value={selectedTab}
+              index={0}
+              className={classes.tabPanel}
+            >
+              Item One
+            </TabPanel>
+            <TabPanel
+              value={selectedTab}
+              index={1}
+              className={classes.tabPanel}
+            >
+              Item Two
+            </TabPanel>
+            <TabPanel
+              value={selectedTab}
+              index={2}
+              className={classes.tabPanel}
+            >
+              Item Three
+            </TabPanel>
+            <TabPanel
+              value={selectedTab}
+              index={3}
+              className={classes.tabPanel}
+            >
+              Item Four
+            </TabPanel>
+            <TabPanel
+              value={selectedTab}
+              index={4}
+              className={classes.tabPanel}
+            >
+              Item Five
+            </TabPanel>
+            <TabPanel
+              value={selectedTab}
+              index={5}
+              className={classes.tabPanel}
+            >
+              Item Six
+            </TabPanel>
+            <TabPanel
+              value={selectedTab}
+              index={6}
+              className={classes.tabPanel}
+            >
+              Item Seven
+            </TabPanel>
+          </Box>
         </Grid>
 
         <Grid
@@ -799,6 +955,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             <Grid item xs={12}>
               <Typography style={{ margin: 6 }}>Materials Used</Typography>
               <Select
+                id='materials'
+                instanceId='materials'
                 styles={selectStyles}
                 className='itemsSelect'
                 classNamePrefix='select'
@@ -898,6 +1056,55 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 onBlur={blurField}
                 disabled={readOnly}
               />
+            </Grid>
+          </Box>
+        </Grid>
+
+        <Grid
+          container
+          spacing={2}
+          justify='space-between'
+          className={classes.formGroup}
+        >
+          <Box width={1}>
+            <Grid item xs={12}>
+              <Typography style={{ margin: 6 }}>
+                Photos
+                <IconButton
+                  onClick={() => setOpenWebcam(true)}
+                  edge='end'
+                  disabled={readOnly}
+                >
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </Typography>
+              {report.photos ? (
+                <div className={classes.root}>
+                  <GridList
+                    cellHeight={200}
+                    spacing={1}
+                    className={classes.gridList}
+                  >
+                    {report.photos.map((photo, index) => (
+                      <GridListTile key={index} cols={2} rows={2}>
+                        <img src={photo} />
+                        <GridListTileBar
+                          titlePosition='top'
+                          actionIcon={
+                            <IconButton>
+                              <RemoveCircleOutlineIcon />
+                            </IconButton>
+                          }
+                          actionPosition='left'
+                          className={classes.titleBar}
+                        />
+                      </GridListTile>
+                    ))}
+                  </GridList>
+                </div>
+              ) : (
+                ''
+              )}
             </Grid>
           </Box>
         </Grid>
@@ -1173,6 +1380,24 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             />
           </Grid>
         </Grid>
+        <Modal open={openWebcam} onClose={handleCloseWebcam}>
+          <div>
+            <Webcam
+              audio={false}
+              screenshotFormat='image/jpeg'
+              ref={setRef}
+              width={320}
+              height={533}
+              videoConstraints={{
+                width: 320,
+                height: 533,
+                facingMode: 'user'
+                // facingMode: { exact: "environment" }
+              }}
+            />
+            <button onClick={capture}>Capture photo</button>
+          </div>
+        </Modal>
       </div>
     </Container>
   )
