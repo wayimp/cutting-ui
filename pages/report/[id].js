@@ -55,6 +55,7 @@ import CancelIcon from '@material-ui/icons/Cancel'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline'
+import PhotoCameraIcon from '@material-ui/icons/PhotoCamera'
 import DateFnsUtils from '@date-io/date-fns'
 import {
   MuiPickersUtilsProvider,
@@ -136,7 +137,17 @@ const useStyles = makeStyles(theme => ({
   modal: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    top: '50%',
+    left: '50%'
+  },
+  modalButton: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    display: 'block',
+    width: 'auto',
+    height: 'auto'
   },
   button: {
     margin: theme.spacing(1)
@@ -176,14 +187,16 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.background.paper
   },
   gridList: {
-    width: 640,
-    height: 533,
+    height: 550,
+    flexWrap: 'nowrap',
     transform: 'translateZ(0)'
   },
   titleBar: {
     background:
-      'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, ' +
-      'rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)'
+      'linear-gradient(to right, rgba(0,0,0,0.7) 0%, ' + 'rgba(0,0,0,0) 20%)'
+  },
+  icon: {
+    color: 'white'
   }
 }))
 
@@ -226,9 +239,11 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const removePhoto = index => {
-    const photos = report.photos.map((photo, i) => {
-      if (i !== index) return photo
-    })
+    const photos = report.photos
+      .map((photo, i) => {
+        if (i !== index) return photo
+      })
+      .filter(noNull => noNull)
 
     const updated = {
       ...report,
@@ -1081,17 +1096,24 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               {report.photos ? (
                 <div className={classes.root}>
                   <GridList
-                    cellHeight={200}
-                    spacing={1}
+                    spacing={3}
                     className={classes.gridList}
+                    cols={1.2}
+                    cellHeight={533}
                   >
                     {report.photos.map((photo, index) => (
-                      <GridListTile key={index} cols={2} rows={2}>
+                      <GridListTile
+                        key={index}
+                        style={{ maxWidth: 320, maxHeight: 533 }}
+                      >
                         <img src={photo} />
                         <GridListTileBar
                           titlePosition='top'
                           actionIcon={
-                            <IconButton>
+                            <IconButton
+                              className={classes.icon}
+                              onClick={() => removePhoto(index)}
+                            >
                               <RemoveCircleOutlineIcon />
                             </IconButton>
                           }
@@ -1380,8 +1402,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             />
           </Grid>
         </Grid>
-        <Modal open={openWebcam} onClose={handleCloseWebcam}>
-          <div>
+        <Modal
+          open={openWebcam}
+          onClose={handleCloseWebcam}
+          className={classes.modal}
+        >
+          <div style={{ position: 'relative' }}>
             <Webcam
               audio={false}
               screenshotFormat='image/jpeg'
@@ -1395,7 +1421,15 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 // facingMode: { exact: "environment" }
               }}
             />
-            <button onClick={capture}>Capture photo</button>
+            <IconButton
+              style={{ marginTop: 6 }}
+              variant='contained'
+              color='secondary'
+              className={classes.modalButton}
+              onClick={capture}
+            >
+              <PhotoCameraIcon />
+            </IconButton>
           </div>
         </Modal>
       </div>
