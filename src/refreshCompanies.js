@@ -35,10 +35,10 @@ const parseJobCodesPage = async jobCodes => {
           data: company
         })
           .then(response => {
-            console.log('Company inserted: ' + company.name)
+            // console.log('Company inserted: ' + company.name)
           })
           .catch(error => {
-            console.log('Error inserting into database')
+            console.log('Error inserting into database: ' + error)
           })
       }
     }
@@ -62,29 +62,30 @@ const getApiToken = async () => {
       }
     )
     if (token) {
-      console.log('API token received: ' + token.substring(0, 40) + '...')
+      // console.log('API token received: ' + token.substring(0, 40) + '...')
     } else {
-      console.log('Error authenticating to API')
+      // console.log('Error authenticating to API')
     }
   })
 }
 
 const deleteCompanies = async () => {
   await axiosApiClient({
-    method: 'get',
-    url: '/deletecompanies'
+    method: 'delete',
+    url: '/companies',
+    body: {}
   })
     .then(response => {
-      console.log('All companies deleted')
+      // console.log('All companies deleted')
     })
     .catch(error => {
-      console.log('Error deleting companies')
+      console.log('Error deleting companies: ' + error)
     })
 }
 
 const getJobCodesPage = async pageNo => {
   const url = 'https://rest.tsheets.com/api/v1/jobcodes'
-  console.log('Hitting: ' + url)
+
   await axios
     .get(url, {
       params: { page: pageNo },
@@ -94,7 +95,7 @@ const getJobCodesPage = async pageNo => {
       }
     })
     .then(async response => {
-      console.log('Job Codes Received')
+      // console.log('Job Codes Received')
       await parseJobCodesPage(response.data)
     })
     .catch(error => {
@@ -102,7 +103,7 @@ const getJobCodesPage = async pageNo => {
     })
 }
 
-const fn = async () => {
+const refreshCompanies = async () => {
   await getApiToken()
   await deleteCompanies()
   await getJobCodesPage(1)
@@ -111,4 +112,4 @@ const fn = async () => {
   await getJobCodesPage(4)
 }
 
-fn()
+refreshCompanies()
