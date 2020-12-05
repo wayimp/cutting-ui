@@ -8,6 +8,8 @@ import App from 'next/app'
 import { wrapper } from '../components/store'
 import { SnackbarProvider } from 'notistack'
 
+import './main.css'
+
 class cuttingApp extends App {
   getInitialProps = async ({ Component, ctx }) => {
     return {

@@ -448,6 +448,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       timeOff: dateTime,
       mileage: 0.0,
       hours: 0.0,
+      travel: false,
       lodging: false,
       toll: false
     }
@@ -483,6 +484,18 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       })
     }
     setReport(updated)
+  }
+
+  const changeLogTravel = index => {
+    const updated = {
+      ...report,
+      logs: report.logs.map((log, i) => {
+        if (i === index) return { ...log, travel: !log.travel }
+        else return log
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
   }
 
   const changeLogLodging = index => {
@@ -1077,62 +1090,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
 
         <Grid
           container
-          spacing={2}
-          justify='space-between'
-          className={classes.formGroup}
-        >
-          <Box width={1}>
-            <Grid item xs={12}>
-              <Typography style={{ margin: 6 }}>
-                Photos
-                <IconButton
-                  onClick={() => setOpenWebcam(true)}
-                  edge='end'
-                  disabled={readOnly}
-                >
-                  <AddCircleOutlineIcon />
-                </IconButton>
-              </Typography>
-              {report.photos ? (
-                <div className={classes.root}>
-                  <GridList
-                    spacing={3}
-                    className={classes.gridList}
-                    cols={1.2}
-                    cellHeight={533}
-                  >
-                    {report.photos.map((photo, index) => (
-                      <GridListTile
-                        key={index}
-                        style={{ maxWidth: 320, maxHeight: 533 }}
-                      >
-                        <img src={photo} />
-                        <GridListTileBar
-                          titlePosition='top'
-                          actionIcon={
-                            <IconButton
-                              className={classes.icon}
-                              onClick={() => removePhoto(index)}
-                            >
-                              <RemoveCircleOutlineIcon />
-                            </IconButton>
-                          }
-                          actionPosition='left'
-                          className={classes.titleBar}
-                        />
-                      </GridListTile>
-                    ))}
-                  </GridList>
-                </div>
-              ) : (
-                ''
-              )}
-            </Grid>
-          </Box>
-        </Grid>
-
-        <Grid
-          container
           direction='row'
           spacing={2}
           justify='space-between'
@@ -1281,6 +1238,21 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                               control={
                                 <Checkbox
                                   className={classes.checkbox}
+                                  checked={log.travel}
+                                  onChange={() => changeLogLodging(index)}
+                                  name='travel'
+                                  color='primary'
+                                  disabled={readOnly}
+                                />
+                              }
+                              label='Travel'
+                            />
+                          </Grid>
+                          <Grid item>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  className={classes.checkbox}
                                   checked={log.lodging}
                                   onChange={() => changeLogLodging(index)}
                                   name='lodging'
@@ -1401,6 +1373,62 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               disabled={readOnly}
             />
           </Grid>
+
+          <Grid
+            container
+            spacing={2}
+            justify='space-between'
+            className={classes.formGroup}
+          >
+            <Box width={1}>
+              <Grid item xs={12}>
+                <Typography style={{ margin: 6 }}>
+                  Photos
+                  <IconButton
+                    onClick={() => setOpenWebcam(true)}
+                    edge='end'
+                    disabled={readOnly}
+                  >
+                    <AddCircleOutlineIcon />
+                  </IconButton>
+                </Typography>
+                {report.photos ? (
+                  <div className={classes.root}>
+                    <GridList
+                      spacing={3}
+                      className={classes.gridList}
+                      cols={1.2}
+                      cellHeight={533}
+                    >
+                      {report.photos.map((photo, index) => (
+                        <GridListTile
+                          key={index}
+                          style={{ maxWidth: 320, maxHeight: 533 }}
+                        >
+                          <img src={photo} />
+                          <GridListTileBar
+                            titlePosition='top'
+                            actionIcon={
+                              <IconButton
+                                className={classes.icon}
+                                onClick={() => removePhoto(index)}
+                              >
+                                <RemoveCircleOutlineIcon />
+                              </IconButton>
+                            }
+                            actionPosition='left'
+                            className={classes.titleBar}
+                          />
+                        </GridListTile>
+                      ))}
+                    </GridList>
+                  </div>
+                ) : (
+                  ''
+                )}
+              </Grid>
+            </Box>
+          </Grid>
         </Grid>
         <Modal
           open={openWebcam}
@@ -1417,8 +1445,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               videoConstraints={{
                 width: 320,
                 height: 533,
-                facingMode: 'user'
-                // facingMode: { exact: "environment" }
+                //facingMode: 'user'
+                facingMode: { exact: 'environment' }
               }}
             />
             <IconButton

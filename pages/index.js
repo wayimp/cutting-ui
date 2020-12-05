@@ -116,6 +116,9 @@ const Login = ({ dispatch, lang, segment }) => {
                 autoFocus
                 label='Username'
                 onChange={event => setUsername(event.target.value)}
+                inputProps={{
+                  autoCapitalize: 'none'
+                }}
               />
               <TextField
                 variant='outlined'
@@ -127,6 +130,9 @@ const Login = ({ dispatch, lang, segment }) => {
                 id='password'
                 label='Password'
                 onChange={event => setPassword(event.target.value)}
+                inputProps={{
+                  autoCapitalize: 'none'
+                }}
               />
               <Button
                 type='submit'

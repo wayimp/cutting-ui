@@ -53,6 +53,7 @@ import {
 } from '@material-ui/core'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
+import SyncIcon from '@material-ui/icons/Sync'
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -100,7 +101,9 @@ const useStyles = makeStyles(theme => ({
   modal: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    top: '50%',
+    left: '50%'
   },
   section: {
     backgroundColor: '#EEF',
@@ -127,6 +130,11 @@ const Page = ({ dispatch, token }) => {
   const { enqueueSnackbar } = useSnackbar()
   const [showClosed, setShowClosed] = React.useState(false)
   const [search, setSearch] = React.useState('')
+  const [newDialog, setNewDialog] = React.useState(false)
+
+  const handleCloseDialog = () => {
+    setNewDialog(false)
+  }
 
   const getData = sc => {
     const url = sc === true ? '/reports?showClosed=true' : '/reports'
@@ -325,6 +333,12 @@ const Page = ({ dispatch, token }) => {
     handleConfirmDeleteClose()
   }
 
+  const syncTSheets = async () => {
+    enqueueSnackbar('TSheets Synced', {
+      variant: 'success'
+    })
+  }
+
   return (
     <Container>
       <TopBar />
@@ -332,6 +346,15 @@ const Page = ({ dispatch, token }) => {
         <div className={classes.toolbar} />
         <div className={classes.root}>
           <Grid container direction='row' justify='center' alignItems='center'>
+            <Button
+              variant='contained'
+              color='secondary'
+              style={{ margin: 20 }}
+              onClick={createNew}
+              startIcon={<AddCircleOutlineIcon />}
+            >
+              New Report
+            </Button>
             <FormControl variant='outlined'>
               <InputLabel>Search</InputLabel>
               <OutlinedInput
@@ -358,15 +381,6 @@ const Page = ({ dispatch, token }) => {
               }
               label='Show Closed'
             />
-            <Button
-              variant='contained'
-              color='secondary'
-              style={{ margin: 20 }}
-              onClick={createNew}
-              startIcon={<AddCircleOutlineIcon />}
-            >
-              New Report
-            </Button>
           </Grid>
 
           {days.map(day => (
@@ -405,6 +419,29 @@ const Page = ({ dispatch, token }) => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Modal
+        open={newDialog}
+        onClose={handleCloseDialog}
+        className={classes.modal}
+      >
+        <Button
+          variant='contained'
+          color='primary'
+          style={{ margin: 10 }}
+          onClick={syncTSheets}
+          startIcon={<SyncIcon />}
+        >
+          Sync TSheets
+        </Button>
+        <List dense={dense}>
+          <ListItem>
+            <ListItemText
+              primary='Single-line item'
+              secondary={secondary ? 'Secondary text' : null}
+            />
+          </ListItem>
+        </List>
+      </Modal>
     </Container>
   )
 }
