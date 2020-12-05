@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import clsx from 'clsx'
 import Router from 'next/router'
 import axiosClient from '../src/axiosClient'
 import { connect } from 'react-redux'
@@ -47,6 +48,8 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
+  DialogContent,
+  DialogContentText,
   OutlinedInput,
   InputAdornment,
   IconButton
@@ -54,6 +57,19 @@ import {
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
 import SyncIcon from '@material-ui/icons/Sync'
+import { refreshCompanies } from '../src/refreshCompanies'
+import CircularProgress from '@material-ui/core/CircularProgress'
+import { green } from '@material-ui/core/colors'
+import CheckIcon from '@material-ui/icons/Check'
+import Select from 'react-select'
+import CancelIcon from '@material-ui/icons/Cancel'
+
+const selectStyles = {
+  menu: base => ({
+    ...base,
+    zIndex: 100
+  })
+}
 
 const useStyles = makeStyles(theme => ({
   toolbar: {
@@ -116,6 +132,32 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 6,
     marginLeft: 16,
     padding: 6
+  },
+  buttonWrapper: {
+    margin: theme.spacing(1),
+    position: 'relative'
+  },
+  buttonSuccess: {
+    backgroundColor: green[500],
+    '&:hover': {
+      backgroundColor: green[700]
+    }
+  },
+  buttonProgress: {
+    color: green[500],
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12
+  },
+  backgroundModal: {
+    backgroundColor: '#EEF',
+    border: '1px solid #AAA',
+    minWidth: 600
+  },
+  dialogPaper: {
+    overflowY: 'visible'
   }
 }))
 
@@ -131,6 +173,13 @@ const Page = ({ dispatch, token }) => {
   const [showClosed, setShowClosed] = React.useState(false)
   const [search, setSearch] = React.useState('')
   const [newDialog, setNewDialog] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+  const [success, setSuccess] = React.useState(false)
+  const [companies, setCompanies] = React.useState([])
+
+  const buttonClassname = clsx({
+    [classes.buttonSuccess]: success
+  })
 
   const handleCloseDialog = () => {
     setNewDialog(false)
@@ -147,6 +196,23 @@ const Page = ({ dispatch, token }) => {
         response.data && Array.isArray(response.data) ? response.data : []
       setReports(result)
       sortReports(result, search)
+    })
+  }
+
+  const getCompanies = () => {
+    axiosClient({
+      method: 'get',
+      url: '/companies',
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(response => {
+      let result =
+        response.data && Array.isArray(response.data) ? response.data : []
+      result.map(company => ({
+        ...company,
+        value: company.name,
+        label: company.name
+      }))
+      setCompanies(result)
     })
   }
 
@@ -195,6 +261,7 @@ const Page = ({ dispatch, token }) => {
   useEffect(() => {
     if (token && token.length > 0) {
       getData(showClosed)
+      getCompanies()
     } else {
       Router.push('/')
     }
@@ -210,17 +277,18 @@ const Page = ({ dispatch, token }) => {
     setConfirmDelete(true)
   }
 
-  const createNew = async existing => {
+  const createNew = async company => {
     const newReport = {
       archived: false,
       job: '',
       date: moment().tz('America/Los_Angeles'),
       po: '',
-      customerName: '',
-      customerStreet: '',
-      customerCity: '',
-      customerState: '',
-      customerZip: '',
+      customerName: company.name ? company.name : '',
+      customerStreet: company.addr1 ? company.addr1 : '',
+      customerStreet2: company.addr2 ? company.addr2 : '',
+      customerCity: company.city ? company.city : '',
+      customerState: company.state ? company.state : '',
+      customerZip: company.zip ? company.zip : '',
       customerPhone: '',
       machineType: '',
       machineSerial: '',
@@ -245,7 +313,7 @@ const Page = ({ dispatch, token }) => {
       servicemanSignature: '',
       servicemanSignatureDate: null
     }
-
+    handleCloseDialog()
     createReport(newReport)
   }
 
@@ -334,9 +402,28 @@ const Page = ({ dispatch, token }) => {
   }
 
   const syncTSheets = async () => {
-    enqueueSnackbar('TSheets Synced', {
-      variant: 'success'
-    })
+    if (!loading) {
+      setSuccess(false)
+      setLoading(true)
+
+      await axiosClient({
+        method: 'delete',
+        url: '/companies',
+        data: {},
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(response => {
+          setSuccess(true)
+          setLoading(false)
+          getCompanies()
+        })
+        .catch(error => {
+          enqueueSnackbar('TSheets Error:' + error, {
+            variant: 'error'
+          })
+          setLoading(false)
+        })
+    }
   }
 
   return (
@@ -350,7 +437,7 @@ const Page = ({ dispatch, token }) => {
               variant='contained'
               color='secondary'
               style={{ margin: 20 }}
-              onClick={createNew}
+              onClick={() => setNewDialog(true)}
               startIcon={<AddCircleOutlineIcon />}
             >
               New Report
@@ -408,7 +495,11 @@ const Page = ({ dispatch, token }) => {
           ))}
         </div>
       </main>
-      <Dialog open={confirmDelete} onClose={handleConfirmDeleteClose}>
+      <Dialog
+        id='deleteConfirmation'
+        open={confirmDelete}
+        onClose={handleConfirmDeleteClose}
+      >
         <DialogTitle>{`Are you sure you want to delete this report?`}</DialogTitle>
         <DialogActions>
           <Button onClick={handleConfirmDeleteClose} color='primary'>
@@ -419,31 +510,75 @@ const Page = ({ dispatch, token }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Modal
+      <Dialog
+        id='selectCompany'
+        fullWidth={true}
+        maxWidth={'md'}
+        fullHeight={true}
+        maxHeight={'md'}
         open={newDialog}
         onClose={handleCloseDialog}
-        className={classes.modal}
+        classes={{
+          paperFullWidth: classes.dialogPaper
+        }}
       >
-        <Button
-          variant='contained'
-          color='primary'
-          style={{ margin: 10 }}
-          onClick={syncTSheets}
-          startIcon={<SyncIcon />}
+        <DialogTitle>Select Company</DialogTitle>
+        <DialogContent
+          classes={{
+            root: classes.dialogPaper
+          }}
         >
-          Sync TSheets
-        </Button>
-        <List dense={dense}>
-          <ListItem>
-            <ListItemText
-              primary='Single-line item'
-              secondary={secondary ? 'Secondary text' : null}
-            />
-          </ListItem>
-        </List>
-      </Modal>
+          <div className={classes.buttonWrapper}>
+            <Button
+              variant='contained'
+              color='secondary'
+              className={buttonClassname}
+              disabled={loading}
+              onClick={syncTSheets}
+              startIcon={success ? <CheckIcon /> : <SyncIcon />}
+            >
+              Sync TSheets
+            </Button>
+            {loading && (
+              <CircularProgress size={24} className={classes.buttonProgress} />
+            )}
+          </div>
+
+          <Select
+            id='companies'
+            instanceId='companies'
+            styles={selectStyles}
+            className='itemsSelect'
+            classNamePrefix='select'
+            isClearable={true}
+            isSearchable={true}
+            onChange={createNew}
+            name='companies'
+            options={companies}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='contained'
+            color='primary'
+            style={{ margin: 10 }}
+            onClick={handleCloseDialog}
+            startIcon={<CancelIcon />}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            color='secondary'
+            style={{ margin: 10 }}
+            onClick={() => createNew({})}
+            startIcon={<AddCircleOutlineIcon />}
+          >
+            Create Blank
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }
-
 export default connect(state => state)(Page)
