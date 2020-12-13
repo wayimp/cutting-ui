@@ -213,6 +213,50 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [selectedTab, setSelectedTab] = React.useState(0)
   const [openWebcam, setOpenWebcam] = React.useState(false)
 
+  const addPlasma = () => {
+    const plasma = {
+      plasmaType: '',
+      plasmaModel: '',
+      plasmaSerial: '',
+      gasConsoleSerial: '',
+      gasConsoleManufactureDate: ''
+    }
+    const updated = {
+      ...report,
+      plasmas: report.plasmas.concat(plasma)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const removePlasma = index => {
+    const updated = {
+      ...report,
+      plasmas: report.plasmas
+        .map((plasma, i) => {
+          if (i === index) return null
+          else return plasma
+        })
+        .filter(notNull => notNull)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const changePlasma = (index, event) => {
+    const fieldName = event.target.name
+    const fieldValue = event.target.value
+    const updated = {
+      ...report,
+      plasmas: report.plasmas.map((plasma, i) => {
+        if (i === index) return { ...plasma, [fieldName]: fieldValue }
+        else return plasma
+      })
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
   let webcamRef
   const setRef = webcam => {
     webcamRef = webcam
@@ -438,6 +482,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     updateReport(updated)
   }
 
+  /*
   const addLogEntry = () => {
     const date = moment().tz('America/Los_Angeles')
     const remainder = 5 - (date.minute() % 5)
@@ -589,6 +634,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     setReport(updated)
     updateReport(updated)
   }
+*/
 
   const updateReport = async updateReport => {
     await axiosClient
@@ -766,14 +812,15 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               onBlur={blurField}
               disabled={readOnly}
             />
-          </Grid>
-          <Grid item>
+            &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
               className={classes.textField}
               variant='outlined'
-              name='control'
-              label='Control'
-              defaultValue={report.control ? report.control : ''}
+              name='machinePowerSupply'
+              label='Power Supply'
+              defaultValue={
+                report.machinePowerSupply ? report.machinePowerSupply : ''
+              }
               onChange={changeField}
               onBlur={blurField}
               disabled={readOnly}
@@ -782,48 +829,76 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             <TextField
               className={classes.textField}
               variant='outlined'
-              name='controlSerial'
+              name='machineManufactureDate'
+              label='Manufacture Date'
+              defaultValue={
+                report.machineManufactureDate
+                  ? report.machineManufactureDate
+                  : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+              disabled={readOnly}
+            />
+          </Grid>
+          <Grid item>
+            <TextField
+              className={classes.textField}
+              variant='outlined'
+              name='torchHeightControlModel'
+              label='Control Model'
+              defaultValue={
+                report.torchHeightControlModel
+                  ? report.torchHeightControlModel
+                  : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+              disabled={readOnly}
+            />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <TextField
+              className={classes.textField}
+              variant='outlined'
+              name='torchHeightControlSerial'
               label='Control Serial'
-              defaultValue={report.controlSerial ? report.controlSerial : ''}
+              defaultValue={
+                report.torchHeightControlSerial
+                  ? report.torchHeightControlSerial
+                  : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+              disabled={readOnly}
+            />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <TextField
+              className={classes.textField}
+              variant='outlined'
+              name='positionerSerial'
+              label='Positioner Serial'
+              defaultValue={
+                report.positionerSerial ? report.positionerSerial : ''
+              }
+              onChange={changeField}
+              onBlur={blurField}
+              disabled={readOnly}
+            />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <TextField
+              className={classes.textField}
+              variant='outlined'
+              name='interfaceSerial'
+              label='User Interface Serial'
+              defaultValue={
+                report.interfaceSerial ? report.interfaceSerial : ''
+              }
               onChange={changeField}
               onBlur={blurField}
               disabled={readOnly}
             />
           </Grid>
           <Grid item>
-            <TextField
-              className={classes.textField}
-              variant='outlined'
-              name='plasmaType'
-              label='Plasma Type'
-              defaultValue={report.plasmaType ? report.plasmaType : ''}
-              onChange={changeField}
-              onBlur={blurField}
-              disabled={readOnly}
-            />
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <TextField
-              className={classes.textField}
-              variant='outlined'
-              name='plasmaModel'
-              label='Plasma Model'
-              defaultValue={report.plasmaModel ? report.plasmaModel : ''}
-              onChange={changeField}
-              onBlur={blurField}
-              disabled={readOnly}
-            />
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <TextField
-              className={classes.textField}
-              variant='outlined'
-              name='plasmaSerial'
-              label='Plasma Serial'
-              defaultValue={report.plasmaSerial ? report.plasmaSerial : ''}
-              onChange={changeField}
-              onBlur={blurField}
-              disabled={readOnly}
-            />
-            &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
               className={classes.textField}
               variant='outlined'
@@ -850,100 +925,103 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               label='Oxy Fuel'
             />
           </Grid>
-
-          <Grid item>
-            <TextField
-              className={classes.textField}
-              variant='outlined'
-              name='drive'
-              label='Drive'
-              defaultValue={report.drive ? report.drive : ''}
-              onChange={changeField}
-              onBlur={blurField}
-              disabled={readOnly}
-            />
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <TextField
-              className={classes.textField}
-              variant='outlined'
-              name='driveSerial'
-              label='Drive Serial'
-              defaultValue={report.driveSerial ? report.driveSerial : ''}
-              onChange={changeField}
-              onBlur={blurField}
-              disabled={readOnly}
-            />
-          </Grid>
-          <AppBar position='static' color='default'>
-            <Tabs
-              value={selectedTab}
-              onChange={(event, newValue) => {
-                setSelectedTab(newValue)
-              }}
-              indicatorColor='primary'
-              textColor='primary'
-              variant='scrollable'
-              scrollButtons='auto'
-            >
-              <Tab label='Item One' value={0} />
-              <Tab label='Item Two' value={1} />
-              <Tab label='Item Three' value={2} />
-              <Tab label='Item Four' value={3} />
-              <Tab label='Item Five' value={4} />
-              <Tab label='Item Six' value={5} />
-              <Tab label='Item Seven' value={6} />
-            </Tabs>
-          </AppBar>
           <Box width={1}>
-            <TabPanel
-              value={selectedTab}
-              index={0}
-              className={classes.tabPanel}
-            >
-              Item One
-            </TabPanel>
-            <TabPanel
-              value={selectedTab}
-              index={1}
-              className={classes.tabPanel}
-            >
-              Item Two
-            </TabPanel>
-            <TabPanel
-              value={selectedTab}
-              index={2}
-              className={classes.tabPanel}
-            >
-              Item Three
-            </TabPanel>
-            <TabPanel
-              value={selectedTab}
-              index={3}
-              className={classes.tabPanel}
-            >
-              Item Four
-            </TabPanel>
-            <TabPanel
-              value={selectedTab}
-              index={4}
-              className={classes.tabPanel}
-            >
-              Item Five
-            </TabPanel>
-            <TabPanel
-              value={selectedTab}
-              index={5}
-              className={classes.tabPanel}
-            >
-              Item Six
-            </TabPanel>
-            <TabPanel
-              value={selectedTab}
-              index={6}
-              className={classes.tabPanel}
-            >
-              Item Seven
-            </TabPanel>
+            <Grid item xs={12}>
+              <Typography style={{ margin: 6 }}>
+                Plasma Cutters
+                <IconButton
+                  onClick={() => addPlasma()}
+                  edge='end'
+                  disabled={readOnly}
+                >
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </Typography>
+            </Grid>
+            <Grid>
+              <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                <List dense={true}>
+                  {report.plasmas.map((plasma, index) => (
+                    <ListItem key={'plasma' + index}>
+                      <ListItemText>
+                        <Grid
+                          container
+                          direction='row'
+                          spacing={2}
+                          justify='space-between'
+                          className={classes.formGroup}
+                        >
+                          <TextField
+                            className={classes.textField}
+                            variant='outlined'
+                            name='plasmaType'
+                            label='Type'
+                            defaultValue={plasma.plasmaType}
+                            onChange={event => changePlasma(index, event)}
+                            onBlur={blurField}
+                            disabled={readOnly}
+                          />
+                          &nbsp;&nbsp;&nbsp;&nbsp;
+                          <TextField
+                            className={classes.textField}
+                            variant='outlined'
+                            name='plasmaModel'
+                            label='Model'
+                            defaultValue={plasma.plasmaModel}
+                            onChange={event => changePlasma(index, event)}
+                            onBlur={blurField}
+                            disabled={readOnly}
+                          />
+                          &nbsp;&nbsp;&nbsp;&nbsp;
+                          <TextField
+                            className={classes.textField}
+                            variant='outlined'
+                            name='plasmaSerial'
+                            label='Plasma Serial'
+                            defaultValue={plasma.plasmaSerial}
+                            onChange={event => changePlasma(index, event)}
+                            onBlur={blurField}
+                            disabled={readOnly}
+                          />
+                          &nbsp;&nbsp;&nbsp;&nbsp;
+                          <TextField
+                            className={classes.textField}
+                            variant='outlined'
+                            name='gasConsoleSerial'
+                            label='Gas Serial'
+                            defaultValue={plasma.gasConsoleSerial}
+                            onChange={event => changePlasma(index, event)}
+                            onBlur={blurField}
+                            disabled={readOnly}
+                          />
+                          &nbsp;&nbsp;&nbsp;&nbsp;
+                          <TextField
+                            className={classes.textField}
+                            variant='outlined'
+                            name='gasConsoleManufactureDate'
+                            label='Gas Manufacture Date'
+                            defaultValue={plasma.gasConsoleManufactureDate}
+                            onChange={event => changePlasma(index, event)}
+                            onBlur={blurField}
+                            disabled={readOnly}
+                          />
+                          &nbsp;&nbsp;&nbsp;&nbsp;
+                        </Grid>
+                      </ListItemText>
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          onClick={() => removePlasma(index)}
+                          edge='end'
+                          disabled={readOnly}
+                        >
+                          <RemoveCircleOutlineIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </MuiPickersUtilsProvider>
+            </Grid>
           </Box>
         </Grid>
 
@@ -1151,22 +1229,13 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         >
           <Box width={1}>
             <Grid item xs={12}>
-              <Typography style={{ margin: 6 }}>
-                Log Entries
-                <IconButton
-                  onClick={() => addLogEntry()}
-                  edge='end'
-                  disabled={readOnly}
-                >
-                  <AddCircleOutlineIcon />
-                </IconButton>
-              </Typography>
+              <Typography style={{ margin: 6 }}>TSheets</Typography>
             </Grid>
             <Grid>
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
                 <List dense={true}>
-                  {report.logs.map((log, index) => (
-                    <ListItem key={'log' + index}>
+                  {report.tsheets.map((tsheet, index) => (
+                    <ListItem key={'tsheet' + index}>
                       <ListItemText>
                         <Grid
                           container
@@ -1177,118 +1246,55 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                         >
                           <Grid item>
                             <DatePicker
-                              autoOk
-                              disableFuture
                               variant='outlined'
                               format='MM/dd/yyyy'
                               label='Date'
-                              value={log.logDate}
-                              onChange={date =>
-                                handleLogDateChange(index, date)
-                              }
-                              disabled={readOnly}
+                              value={tsheet.date}
+                              disabled={true}
                             />
                           </Grid>
                           <Grid item>
                             <TimePicker
-                              autoOk
-                              disableFuture
-                              showTodayButton
-                              todayLabel='now'
-                              minutesStep={5}
-                              label='Time On'
-                              value={log.timeOn}
-                              onChange={date =>
-                                handleLogTimeOnChange(index, date)
-                              }
-                              disabled={readOnly}
+                              label='Start'
+                              value={tsheet.start}
+                              disabled={true}
                             />
                           </Grid>
                           <Grid item>
                             <TimePicker
-                              autoOk
-                              disableFuture
-                              showTodayButton
-                              todayLabel='now'
-                              minutesStep={5}
-                              label='Time Off'
-                              value={log.timeOff}
-                              onChange={date =>
-                                handleLogTimeOffChange(index, date)
-                              }
-                              helperText={
-                                log.hours ? 'Total hours: ' + log.hours : ''
-                              }
-                              disabled={readOnly}
+                              label='End'
+                              value={tsheet.end}
+                              disabled={true}
                             />
                           </Grid>
                           <Grid item>
                             <TextField
-                              label='Mileage'
-                              type='number'
-                              defaultValue={log.mileage}
-                              onChange={event =>
-                                changeLogMileage(index, event.target.value)
-                              }
-                              disabled={readOnly}
+                              label='Duration'
+                              type='string'
+                              value={new Date(1000 * tsheet.duration)
+                                .toISOString()
+                                .substr(11, 5)}
+                              disabled={true}
                             />
                           </Grid>
                           <Grid item>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  className={classes.checkbox}
-                                  checked={log.travel}
-                                  onChange={() => changeLogLodging(index)}
-                                  name='travel'
-                                  color='primary'
-                                  disabled={readOnly}
-                                />
-                              }
-                              label='Travel'
+                            <TextField
+                              label='Name'
+                              type='string'
+                              value={tsheet.name}
+                              disabled={true}
                             />
                           </Grid>
                           <Grid item>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  className={classes.checkbox}
-                                  checked={log.lodging}
-                                  onChange={() => changeLogLodging(index)}
-                                  name='lodging'
-                                  color='primary'
-                                  disabled={readOnly}
-                                />
-                              }
-                              label='Lodging'
-                            />
-                          </Grid>
-                          <Grid item>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  className={classes.checkbox}
-                                  checked={log.toll}
-                                  onChange={() => changeLogToll(index)}
-                                  name='toll'
-                                  color='primary'
-                                  disabled={readOnly}
-                                />
-                              }
-                              label='Toll'
+                            <TextField
+                              label='Notes'
+                              type='string'
+                              value={tsheet.notes}
+                              disabled={true}
                             />
                           </Grid>
                         </Grid>
                       </ListItemText>
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          onClick={() => removeLogEntry(index)}
-                          edge='end'
-                          disabled={readOnly}
-                        >
-                          <RemoveCircleOutlineIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
                     </ListItem>
                   ))}
                 </List>

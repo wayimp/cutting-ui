@@ -1,5 +1,6 @@
 const axios = require('axios')
 
+// This code has been moved to the API
 const axiosApiClient = axios.create({
   baseURL: 'http://localhost:4040'
   //baseURL: 'https://api.valleycuttingsystems.net'
@@ -10,6 +11,7 @@ const parseJobCodesPage = async jobCodes => {
     async ([key, value]) => {
       if (value.name) {
         const company = { name: value.name }
+        company.job = value.id
         if (value.locations && value.locations.length > 0) {
           const locationCode = value.locations[0]
           const locationInfo =
