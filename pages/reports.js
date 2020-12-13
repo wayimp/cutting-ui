@@ -207,9 +207,8 @@ const Page = ({ dispatch, token }) => {
     }).then(response => {
       let result =
         response.data && Array.isArray(response.data) ? response.data : []
-      result.map(company => ({
+      result = result.map(company => ({
         ...company,
-        value: company.name,
         label: company.name
       }))
       setCompanies(result)
@@ -280,7 +279,7 @@ const Page = ({ dispatch, token }) => {
   const createNew = async company => {
     const newReport = {
       archived: false,
-      job: '',
+      job: company.job ? company.job : '',
       date: moment().tz('America/Los_Angeles'),
       po: '',
       customerName: company.name ? company.name : '',
@@ -292,20 +291,20 @@ const Page = ({ dispatch, token }) => {
       customerPhone: '',
       machineType: '',
       machineSerial: '',
-      control: '',
-      controlSerial: '',
-      plasmaType: '',
-      plasmaModel: '',
-      plasmaSerial: '',
+      machinePowerSupply: '',
+      machineManufactureDate: '',
+      torchHeightControlModel: '',
+      torchHeightControlSerial: '',
+      positionerSerial: '',
+      interfaceSerial: '',
       oxyFuel: false,
       torches: '',
-      drive: '',
-      driveSerial: '',
+      plasmas: [],
       reportedTrouble: '',
       materials: [],
       servicePerformed: '',
       issues: [],
-      logs: [],
+      tsheets: [],
       completed: false,
       customerSignature: '',
       customerSignatureDate: null,
@@ -344,7 +343,7 @@ const Page = ({ dispatch, token }) => {
       materials: [],
       servicePerformed: '',
       issues: [],
-      logs: [],
+      tsheets: [],
       completed: false,
       customerSignature: '',
       customerSignatureDate: null,
