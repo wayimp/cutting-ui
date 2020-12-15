@@ -897,6 +897,28 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               onBlur={blurField}
               disabled={readOnly}
             />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <TextField
+              className={classes.textField}
+              variant='outlined'
+              name='driveModel'
+              label='Drive Model'
+              defaultValue={report.driveModel ? report.driveModel : ''}
+              onChange={changeField}
+              onBlur={blurField}
+              disabled={readOnly}
+            />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <TextField
+              className={classes.textField}
+              variant='outlined'
+              name='driveSerial'
+              label='Drive Serial'
+              defaultValue={report.driveSerial ? report.driveSerial : ''}
+              onChange={changeField}
+              onBlur={blurField}
+              disabled={readOnly}
+            />
           </Grid>
           <Grid item>
             <TextField
@@ -1090,7 +1112,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 variant='outlined'
                 name='itemDesc'
                 label='Item Description'
-                value={itemDesc}
+                value={null}
                 onChange={event => setItemDesc(event.target.value)}
                 disabled={readOnly}
               />
@@ -1302,6 +1324,63 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
+
+        <Grid
+          container
+          spacing={2}
+          justify='space-between'
+          className={classes.formGroup}
+        >
+          <Box width={1}>
+            <Grid item xs={12}>
+              <Typography style={{ margin: 6 }}>
+                Photos
+                <IconButton
+                  onClick={() => setOpenWebcam(true)}
+                  edge='end'
+                  disabled={readOnly}
+                >
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </Typography>
+              {report.photos ? (
+                <div className={classes.root}>
+                  <GridList
+                    spacing={3}
+                    className={classes.gridList}
+                    cols={1.2}
+                    cellHeight={533}
+                  >
+                    {report.photos.map((photo, index) => (
+                      <GridListTile
+                        key={index}
+                        style={{ maxWidth: 320, maxHeight: 533 }}
+                      >
+                        <img src={photo} />
+                        <GridListTileBar
+                          titlePosition='top'
+                          actionIcon={
+                            <IconButton
+                              className={classes.icon}
+                              onClick={() => removePhoto(index)}
+                            >
+                              <RemoveCircleOutlineIcon />
+                            </IconButton>
+                          }
+                          actionPosition='left'
+                          className={classes.titleBar}
+                        />
+                      </GridListTile>
+                    ))}
+                  </GridList>
+                </div>
+              ) : (
+                ''
+              )}
+            </Grid>
+          </Box>
+        </Grid>
+
         <Grid
           container
           direction='row'
@@ -1378,62 +1457,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               onBlur={blurField}
               disabled={readOnly}
             />
-          </Grid>
-
-          <Grid
-            container
-            spacing={2}
-            justify='space-between'
-            className={classes.formGroup}
-          >
-            <Box width={1}>
-              <Grid item xs={12}>
-                <Typography style={{ margin: 6 }}>
-                  Photos
-                  <IconButton
-                    onClick={() => setOpenWebcam(true)}
-                    edge='end'
-                    disabled={readOnly}
-                  >
-                    <AddCircleOutlineIcon />
-                  </IconButton>
-                </Typography>
-                {report.photos ? (
-                  <div className={classes.root}>
-                    <GridList
-                      spacing={3}
-                      className={classes.gridList}
-                      cols={1.2}
-                      cellHeight={533}
-                    >
-                      {report.photos.map((photo, index) => (
-                        <GridListTile
-                          key={index}
-                          style={{ maxWidth: 320, maxHeight: 533 }}
-                        >
-                          <img src={photo} />
-                          <GridListTileBar
-                            titlePosition='top'
-                            actionIcon={
-                              <IconButton
-                                className={classes.icon}
-                                onClick={() => removePhoto(index)}
-                              >
-                                <RemoveCircleOutlineIcon />
-                              </IconButton>
-                            }
-                            actionPosition='left'
-                            className={classes.titleBar}
-                          />
-                        </GridListTile>
-                      ))}
-                    </GridList>
-                  </div>
-                ) : (
-                  ''
-                )}
-              </Grid>
-            </Box>
           </Grid>
         </Grid>
         <Modal
