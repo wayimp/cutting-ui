@@ -8,23 +8,21 @@ import TopBar from '../components/TopBar'
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
-import axiosClient from '../src/axiosClient'
-import {
-  Avatar,
-  Box,
-  Container,
-  Grid,
-  Paper,
-  Typography,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  Input,
-  FormHelperText,
-  Button,
-  TextField,
-  Snackbar
-} from '@material-ui/core'
+import { axiosClient } from '../src/axiosClient'
+import Avatar from '@material-ui/core/Avatar'
+import Box from '@material-ui/core/Box'
+import Container from '@material-ui/core/Container'
+import Grid from '@material-ui/core/Grid'
+import Paper from '@material-ui/core/Paper'
+import Typography from '@material-ui/core/Typography'
+import FormControl from '@material-ui/core/FormControl'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import InputLabel from '@material-ui/core/InputLabel'
+import Input from '@material-ui/core/Input'
+import FormHelperText from '@material-ui/core/FormHelperText'
+import Button from '@material-ui/core/Button'
+import TextField from '@material-ui/core/TextField'
+import Snackbar from '@material-ui/core/Snackbar'
 
 const useStyles = makeStyles(theme => ({
   paper: {

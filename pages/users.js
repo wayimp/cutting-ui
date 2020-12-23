@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Router from 'next/router'
-import axiosClient from '../src/axiosClient'
+import { axiosClient } from '../src/axiosClient'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
 import { wrapper } from '../components/store'

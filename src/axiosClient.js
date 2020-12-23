@@ -1,8 +1,10 @@
-import axios from 'axios';
+import axios from 'axios'
 
-const instance = axios.create({
-    baseURL: 'http://localhost:4040'
-    //baseURL: 'https://api.valleycuttingsystems.net'
-});
+const baseURL = 'http://localhost:4040'
+//const baseURL = 'https://api.valleycuttingsystems.net'
 
-export default instance;
+const axiosClient = axios.create({
+  baseURL
+})
+
+module.exports = { axiosClient, baseURL }
