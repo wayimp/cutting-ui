@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import Router from 'next/router'
-import axiosClient from '../src/axiosClient'
+import { axiosClient } from '../src/axiosClient'
 import { connect } from 'react-redux'
 import { compose } from 'redux'
 import { wrapper } from '../components/store'
@@ -20,40 +20,38 @@ import { flatten } from 'lodash'
 import moment from 'moment-timezone'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd MMMM DD, YYYY'
-import {
-  Container,
-  Card,
-  Grid,
-  Paper,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  FormControl,
-  InputLabel,
-  Input,
-  FormHelperText,
-  FormControlLabel,
-  Button,
-  Checkbox,
-  Modal,
-  Backdrop,
-  Fade,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  OutlinedInput,
-  InputAdornment,
-  IconButton
-} from '@material-ui/core'
+import Container from '@material-ui/core/Container'
+import Card from '@material-ui/core/Card'
+import Grid from '@material-ui/core/Grid'
+import Paper from '@material-ui/core/Paper'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemAvatar from '@material-ui/core/ListItemAvatar'
+import ListItemText from '@material-ui/core/ListItemText'
+import Typography from '@material-ui/core/Typography'
+import Table from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableRow from '@material-ui/core/TableRow'
+import FormControl from '@material-ui/core/FormControl'
+import InputLabel from '@material-ui/core/InputLabel'
+import Input from '@material-ui/core/Input'
+import FormHelperText from '@material-ui/core/FormHelperText'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import Button from '@material-ui/core/Button'
+import Checkbox from '@material-ui/core/Checkbox'
+import Modal from '@material-ui/core/Modal'
+import Backdrop from '@material-ui/core/Backdrop'
+import Fade from '@material-ui/core/Fade'
+import TextField from '@material-ui/core/TextField'
+import Dialog from '@material-ui/core/Dialog'
+import DialogTitle from '@material-ui/core/DialogTitle'
+import DialogActions from '@material-ui/core/DialogActions'
+import DialogContent from '@material-ui/core/DialogContent'
+import DialogContentText from '@material-ui/core/DialogContentText'
+import OutlinedInput from '@material-ui/core/OutlinedInput'
+import InputAdornment from '@material-ui/core/InputAdornment'
+import IconButton from '@material-ui/core/IconButton'
 import { useSnackbar } from 'notistack'
 import cookie from 'js-cookie'
 import SyncIcon from '@material-ui/icons/Sync'

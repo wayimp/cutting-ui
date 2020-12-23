@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axiosClient from '../../src/axiosClient'
+import { axiosClient } from '../../src/axiosClient'
 import { useSnackbar } from 'notistack'
 import { connect } from 'react-redux'
 import { flatten } from 'lodash'
@@ -12,44 +12,28 @@ const priceFormat = '$0.00'
 import moment from 'moment-timezone'
 const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd MMM DD hh:mm a'
-import {
-  Box,
-  Container,
-  Grid,
-  Checkbox,
-  Typography,
-  TextField,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  ListItemSecondaryAction,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  Button,
-  FormControlLabel,
-  IconButton,
-  AppBar,
-  Tabs,
-  Tab,
-  Modal,
-  GridList,
-  GridListTile,
-  GridListTileBar
-} from '@material-ui/core'
-/*
-import {
-  Timeline,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDot,
-  TimelineOppositeContent
-} from '@material-ui/lab'
-*/
+import Box from '@material-ui/core/Box'
+import Container from '@material-ui/core/Container'
+import Grid from '@material-ui/core/Grid'
+import Checkbox from '@material-ui/core/Checkbox'
+import Typography from '@material-ui/core/Typography'
+import TextField from '@material-ui/core/TextField'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemAvatar from '@material-ui/core/ListItemAvatar'
+import ListItemText from '@material-ui/core/ListItemText'
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
+import Table from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableRow from '@material-ui/core/TableRow'
+import Button from '@material-ui/core/Button'
+import FormControlLabel from '@material-ui/core/FormControlLabel'
+import IconButton from '@material-ui/core/IconButton'
+import Modal from '@material-ui/core/Modal'
+import GridList from '@material-ui/core/GridList'
+import GridListTile from '@material-ui/core/GridListTile'
+import GridListTileBar from '@material-ui/core/GridListTileBar'
 import FormatListBulletedIcon from '@material-ui/icons/FormatListBulleted'
 import CancelIcon from '@material-ui/icons/Cancel'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
@@ -71,6 +55,16 @@ const s3 = new AWS.S3({
   accessKeyId: process.env.SPACES_KEY,
   secretAccessKey: process.env.SPACES_SECRET
 })
+
+Array.prototype.sum = function (prop) {
+  var total = 0
+  for (var i = 0, _len = this.length; i < _len; i++) {
+    if (this[i] && this[i][prop]) {
+      total += this[i][prop]
+    }
+  }
+  return total
+}
 
 const selectStyles = {
   menu: base => ({
@@ -338,28 +332,27 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     const fieldName = event.target.name
     const fieldValue = event.target.value
 
-    // Beware race condition when updating two fields at once
-    switch (fieldName) {
-      case 'customerSignature':
-        setTimeout(
-          () =>
-            changeValue('customerSignatureDate', moment().format('MM/DD/YYYY')),
-          3000
-        )
-        break
-
-      case 'servicemanSignature':
-        setTimeout(
-          () =>
-            changeValue(
-              'servicemanSignatureDate',
-              moment().format('MM/DD/YYYY')
-            ),
-          3000
-        )
-        break
-    }
     changeValue(fieldName, fieldValue)
+  }
+
+  const changeFieldServicemanSignature = event => {
+    const fieldValue = event.target.value
+    const updated = {
+      ...report,
+      servicemanSignature: fieldValue,
+      servicemanSignatureDate: moment().format('MM/DD/YYYY')
+    }
+    setReport(updated)
+  }
+
+  const changeFieldCustomerSignature = event => {
+    const fieldValue = event.target.value
+    const updated = {
+      ...report,
+      customerSignature: fieldValue,
+      customerSignatureDate: moment().format('MM/DD/YYYY')
+    }
+    setReport(updated)
   }
 
   const blurField = event => {
@@ -429,9 +422,14 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       ...report,
       materials: report.materials
         .map((material, i) => {
-          if (i === index) material.quantity -= 1
-          if (material.quantity < 1) return null
-          else return material
+          if (i === index) {
+            material.quantity -= 1
+          }
+          if (material.quantity < 1) {
+            return null
+          } else {
+            return material
+          }
         })
         .filter(notNull => notNull)
     }
@@ -1257,7 +1255,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
                 <List dense={true}>
                   {report.tsheets.map((tsheet, index) => (
-                    <ListItem key={'tsheet' + index}>
+                    <ListItem key={'tsheet' + index} style={{ marginTop: -40 }}>
                       <ListItemText>
                         <Grid
                           container
@@ -1321,6 +1319,14 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                   ))}
                 </List>
               </MuiPickersUtilsProvider>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography style={{ margin: 6 }}>
+                Total Time:{' '}
+                {new Date(1000 * report.tsheets.sum('duration'))
+                  .toISOString()
+                  .substr(11, 5)}
+              </Typography>
             </Grid>
           </Box>
         </Grid>
@@ -1419,7 +1425,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={
                 report.servicemanSignature ? report.servicemanSignature : ''
               }
-              onChange={changeField}
+              onChange={changeFieldServicemanSignature}
               onBlur={blurField}
               disabled={readOnly}
             />
@@ -1453,7 +1459,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               defaultValue={
                 report.customerSignature ? report.customerSignature : ''
               }
-              onChange={changeField}
+              onChange={changeFieldCustomerSignature}
               onBlur={blurField}
               disabled={readOnly}
             />
