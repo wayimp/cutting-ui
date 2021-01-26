@@ -48,7 +48,9 @@ import PhotoCameraIcon from '@material-ui/icons/PhotoCamera'
 import PlayForWorkIcon from '@material-ui/icons/PlayForWork'
 import MailOutlineIcon from '@material-ui/icons/MailOutline'
 import PictureAsPdfIcon from '@material-ui/icons/PictureAsPdf'
+import EmailIcon from '@material-ui/icons/Email'
 import SendIcon from '@material-ui/icons/Send'
+import FormatListNumberedIcon from '@material-ui/icons/FormatListNumbered'
 import DateFnsUtils from '@date-io/date-fns'
 import {
   MuiPickersUtilsProvider,
@@ -203,7 +205,7 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const Report = ({ propsReport, propsOptions, dispatch, token }) => {
+const Report = ({ propsReport, propsSent, propsOptions, dispatch, token }) => {
   const classes = useStyles()
   const theme = useTheme()
   const [report, setReport] = React.useState(propsReport)
@@ -218,9 +220,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [selectedTab, setSelectedTab] = React.useState(0)
   const [openWebcam, setOpenWebcam] = React.useState(false)
   const [openEmail, setOpenEmail] = React.useState(false)
-  const [emailTo, setEmailTo] = React.useState('')
-  const [emailSubject, setEmailSubject] = React.useState('')
-  const [emailBody, setEmailBody] = React.useState('')
+  const [email, setEmail] = React.useState({})
+  const [sentEmails, setSentEmails] = React.useState(propsSent)
 
   const handleRequisitionOpen = () => {
     let body = `${report.customerName} (${report.job})\n${window.location.href}\n\nPlease order the following items:\n\n`
@@ -236,12 +237,41 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         '\n\n'
     })
 
-    setEmailTo('Keith Humphrey <wayimp@yahoo.com>')
-    // setEmailTo('Kat Earnest <kat@valleycuttingsystems.com>')
+    const emailTemplate = {
+      readOnly: false,
+      action: 'Requisition',
+      to: 'Kat Earnest <kat@valleycuttingsystems.com>',
+      subject: `Requisition Request for ${report.customerName}`,
+      body
+    }
 
-    setEmailSubject(`Requisition Request for ${report.customerName}`)
+    setEmail(emailTemplate)
 
-    setEmailBody(body)
+    setOpenEmail(true)
+  }
+
+  const handleIssuesOpen = () => {
+    let body = `Follow Up Issues from Service Report: \n${window.location.href}\n\n`
+
+    report.issues.map((issue, ii) => {
+      body +=
+        ii +
+        1 +
+        '. ' +
+        (issue.resolved ? '[Done] ' : '') +
+        issue.description +
+        '\n\n'
+    })
+
+    const emailTemplate = {
+      readOnly: false,
+      action: 'ToDo',
+      to: 'Kat Earnest <kat@valleycuttingsystems.com>',
+      subject: `Follow-Up Issues for ${report.customerName}`,
+      body
+    }
+
+    setEmail(emailTemplate)
 
     setOpenEmail(true)
   }
@@ -249,36 +279,68 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const handlePdfOpen = () => {
     let body = `Your service report is available here: ${window.location.href}\n\nPDF version: ${baseURL}/pdf/${report._id}`
 
-    setEmailTo(`${report.customerName} <${report.customerEmail}>`)
+    const emailTemplate = {
+      readOnly: false,
+      action: 'PDF',
+      to: `${report.customerName} <${report.customerEmail}>`,
+      subject: 'Printable Service Report from Valley Cutting Systems',
+      body
+    }
 
-    setEmailSubject('Printable Service Report from Valley Cutting Systems')
-
-    setEmailBody(body)
+    setEmail(emailTemplate)
 
     setOpenEmail(true)
   }
 
+  const displayEmailSent = sent => {
+    sent.readOnly = true
+    setEmail(sent)
+    setOpenEmail(true)
+  }
+
   const handleEmailClose = () => {
-    setEmailTo('')
-    setEmailSubject('')
-    setEmailBody('')
+    const emailTemplate = {
+      readOnly: true,
+      action: '',
+      to: '',
+      subject: '',
+      body: ''
+    }
+
     setOpenEmail(false)
+    setEmail(emailTemplate)
+  }
+
+  const changeEmail = event => {
+    const fieldName = event.target.name
+    const fieldValue = event.target.value
+
+    const updated = {
+      ...email,
+      [fieldName]: fieldValue
+    }
+    setEmail(updated)
   }
 
   const sendEmail = async () => {
-    const email = {
-      to: emailTo,
-      body: emailBody,
-      subject: emailSubject,
+    const emailToSend = {
+      action: email.action,
+      to: email.to,
+      body: email.body,
+      subject: email.subject,
       reportId: report._id
     }
 
     await axiosClient
-      .post('/emails', email)
+      .post('/emails', emailToSend)
       .then(res => {
         enqueueSnackbar('Email Sent', {
           variant: 'success'
         })
+
+        const updated = [emailToSend].concat(sentEmails)
+        setSentEmails(updated)
+
         handleEmailClose()
       })
       .catch(err => {
@@ -1153,15 +1215,40 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 ))}
               </List>
             </Grid>
-            <IconButton
-              onClick={handleRequisitionOpen}
-              style={{ marginTop: 6 }}
-              disabled={readOnly}
-              color='secondary'
-            >
-              <MailOutlineIcon />
-              &nbsp;Requisition
-            </IconButton>
+            <Grid item xs={12}>
+              <IconButton
+                onClick={handleRequisitionOpen}
+                style={{ marginTop: 6 }}
+                disabled={readOnly}
+                color='secondary'
+              >
+                <MailOutlineIcon />
+                &nbsp;Requisition
+              </IconButton>
+              <List>
+                {sentEmails.map(sent =>
+                  sent.action === 'Requisition' ? (
+                    <ListItem key={sent._id}>
+                      <ListItemText>
+                        <IconButton
+                          onClick={() => displayEmailSent(sent)}
+                          style={{ marginTop: 6 }}
+                          color='secondary'
+                        >
+                          <EmailIcon />
+                          &nbsp;
+                          {moment(sent.sent)
+                            .tz('America/Los_Angeles')
+                            .format(dateDisplay)}
+                        </IconButton>
+                      </ListItemText>
+                    </ListItem>
+                  ) : (
+                    ''
+                  )
+                )}
+              </List>
+            </Grid>
           </Grid>
         </Box>
         <Box width={1}>
@@ -1279,7 +1366,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
-
         <Grid
           container
           direction='row'
@@ -1334,6 +1420,40 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               </List>
             </Grid>
           </Box>
+          <Grid item xs={12}>
+            <IconButton
+              onClick={handleIssuesOpen}
+              style={{ marginTop: 6 }}
+              disabled={readOnly}
+              color='secondary'
+            >
+              <FormatListNumberedIcon />
+              &nbsp;Email To-Do List
+            </IconButton>
+            <List>
+              {sentEmails.map(sent =>
+                sent.action === 'ToDo' ? (
+                  <ListItem key={sent._id}>
+                    <ListItemText>
+                      <IconButton
+                        onClick={() => displayEmailSent(sent)}
+                        style={{ marginTop: 6 }}
+                        color='secondary'
+                      >
+                        <EmailIcon />
+                        &nbsp;
+                        {moment(sent.sent)
+                          .tz('America/Los_Angeles')
+                          .format(dateDisplay)}
+                      </IconButton>
+                    </ListItemText>
+                  </ListItem>
+                ) : (
+                  ''
+                )
+              )}
+            </List>
+          </Grid>
         </Grid>
         {report.fieldService ? (
           <Grid
@@ -1577,6 +1697,31 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               disabled={readOnly}
             />
           </Grid>
+          <Grid item xs={12}>
+            <List>
+              {sentEmails.map(sent =>
+                sent.action === 'PDF' ? (
+                  <ListItem key={sent._id}>
+                    <ListItemText>
+                      <IconButton
+                        onClick={() => displayEmailSent(sent)}
+                        style={{ marginTop: 6 }}
+                        color='secondary'
+                      >
+                        <EmailIcon />
+                        &nbsp;
+                        {moment(sent.sent)
+                          .tz('America/Los_Angeles')
+                          .format(dateDisplay)}
+                      </IconButton>
+                    </ListItemText>
+                  </ListItem>
+                ) : (
+                  ''
+                )
+              )}
+            </List>
+          </Grid>
         </Grid>
         <Modal
           open={openWebcam}
@@ -1610,44 +1755,60 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
         </Modal>
       </div>
       <Dialog open={openEmail} onClose={handleEmailClose}>
-        <DialogTitle>{'Email'}</DialogTitle>
+        <DialogTitle>
+          {'Email' +
+            (email.sent
+              ? ' sent on ' +
+                moment(email.sent)
+                  .tz('America/Los_Angeles')
+                  .format(dateDisplay)
+              : '')}
+        </DialogTitle>
         <Grid style={{ margin: 20 }}>
           <TextField
             style={{ marginBottom: 10 }}
             className={classes.textFieldWide}
             variant='outlined'
-            name='emailTo'
+            name='to'
             label='To:'
-            defaultValue={emailTo}
-            onChange={event => setEmailTo(event.target.value)}
+            defaultValue={email.to}
+            disabled={email.readOnly ? true : false}
+            onChange={changeEmail}
           />
           <TextField
             className={classes.textFieldWide}
             style={{ marginBottom: 10 }}
             multiline={true}
             variant='outlined'
-            name='emailSubject'
+            name='subject'
             label='Subject'
-            defaultValue={emailSubject}
-            onChange={event => setEmailSubject(event.target.value)}
+            defaultValue={email.subject}
+            disabled={email.readOnly ? true : false}
+            onChange={changeEmail}
           />
           <TextField
             className={classes.textFieldWide}
             multiline={true}
             variant='outlined'
-            name='emailBody'
+            name='body'
             label='Body'
-            defaultValue={emailBody}
-            onChange={event => setEmailBody(event.target.value)}
+            defaultValue={email.body}
+            disabled={email.readOnly ? true : false}
+            onChange={changeEmail}
           />
         </Grid>
+
         <DialogActions>
           <Button onClick={handleEmailClose} color='primary'>
-            Cancel
+            {email.readOnly ? 'Close' : 'Cancel'}
           </Button>
-          <IconButton onClick={sendEmail} color='secondary' autoFocus>
-            <SendIcon /> Send
-          </IconButton>
+          {email.readOnly ? (
+            ''
+          ) : (
+            <IconButton onClick={sendEmail} color='secondary' autoFocus>
+              <SendIcon /> Send
+            </IconButton>
+          )}
         </DialogActions>
       </Dialog>
     </Container>
@@ -1661,13 +1822,17 @@ export async function getServerSideProps (context) {
     .get('/reports/' + id)
     .then(response => response.data)
 
+  const propsSent = await axiosClient
+    .get('/sent/' + id)
+    .then(response => response.data)
+
   const items = await axiosClient.get('/items').then(response => response.data)
 
   const propsOptions = items.map(item => {
     const option = {
       type: item.Type,
       value: item.Item,
-      label: item.Item + ': ' + item.Description
+      label: '[' + item.Item + '] ' + item.Description
     }
     return option
   })
@@ -1675,6 +1840,7 @@ export async function getServerSideProps (context) {
   return {
     props: {
       propsReport,
+      propsSent,
       propsOptions
     }
   }
