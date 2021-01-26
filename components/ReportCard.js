@@ -75,6 +75,13 @@ const ReportCard = ({ report, copyToNew, archive }) => {
     setExpanded(!expanded)
   }
 
+  const foreground =
+    typeof report.fieldService === 'undefined'
+      ? 'primary'
+      : report.fieldService
+      ? 'primary'
+      : 'secondary'
+
   return (
     <Card className={classes.root}>
       <CardHeader
@@ -82,25 +89,28 @@ const ReportCard = ({ report, copyToNew, archive }) => {
           <>
             <Tooltip title='Archive Report'>
               <IconButton onClick={() => archive(report)}>
-                <DeleteIcon color='secondary' />
+                <DeleteIcon color={foreground} />
               </IconButton>
             </Tooltip>
             <Tooltip title='Copy Customer Details to New Report'>
               <IconButton onClick={() => copyToNew(report)}>
-                <FileCopyIcon color='secondary' />
+                <FileCopyIcon color={foreground} />
               </IconButton>
             </Tooltip>
             <Tooltip title='Display as PDF'>
               <IconButton>
-                <Link href={`${baseURL}/pdf/${report._id}`} target={'pdf' + report._id}>
-                  <PictureAsPdfIcon color='secondary' />
+                <Link
+                  href={`${baseURL}/pdf/${report._id}`}
+                  target={'pdf' + report._id}
+                >
+                  <PictureAsPdfIcon color={foreground} />
                 </Link>
               </IconButton>
             </Tooltip>
             <Tooltip title='View or Edit Report'>
               <IconButton>
                 <Link href={`/report/${report._id}`} target={report._id}>
-                  <LaunchIcon color='secondary' />
+                  <LaunchIcon color={foreground} />
                 </Link>
               </IconButton>
             </Tooltip>
@@ -108,11 +118,12 @@ const ReportCard = ({ report, copyToNew, archive }) => {
         }
       />
       <CardContent>
-        <Typography variant='h5' color='textSecondary'>
-          {report.customerName}
-        </Typography>
-        <Typography variant='body1' color='textSecondary'>
-          {report.reportedTrouble}
+        <Typography variant='h5'>{report.customerName}</Typography>
+        <Typography variant='body1'>{report.reportedTrouble}</Typography>
+        <Typography variant='h5'>
+          {report.customerSignatureDate
+            ? `Closed: ${report.customerSignatureDate}`
+            : ''}
         </Typography>
       </CardContent>
     </Card>

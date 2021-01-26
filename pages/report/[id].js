@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { axiosClient } from '../../src/axiosClient'
+import { axiosClient, baseURL } from '../../src/axiosClient'
 import { useSnackbar } from 'notistack'
 import { connect } from 'react-redux'
 import { flatten } from 'lodash'
@@ -14,6 +14,7 @@ const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
 const dateDisplay = 'dddd MMM DD hh:mm a'
 import Box from '@material-ui/core/Box'
 import Container from '@material-ui/core/Container'
+import Switch from '@material-ui/core/Switch'
 import Grid from '@material-ui/core/Grid'
 import Checkbox from '@material-ui/core/Checkbox'
 import Typography from '@material-ui/core/Typography'
@@ -27,10 +28,14 @@ import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableRow from '@material-ui/core/TableRow'
+import Dialog from '@material-ui/core/Dialog'
+import DialogActions from '@material-ui/core/DialogActions'
+import DialogTitle from '@material-ui/core/DialogTitle'
 import Button from '@material-ui/core/Button'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import IconButton from '@material-ui/core/IconButton'
 import Modal from '@material-ui/core/Modal'
+import Tooltip from '@material-ui/core/Tooltip'
 import GridList from '@material-ui/core/GridList'
 import GridListTile from '@material-ui/core/GridListTile'
 import GridListTileBar from '@material-ui/core/GridListTileBar'
@@ -40,6 +45,10 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline'
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline'
 import PhotoCameraIcon from '@material-ui/icons/PhotoCamera'
+import PlayForWorkIcon from '@material-ui/icons/PlayForWork'
+import MailOutlineIcon from '@material-ui/icons/MailOutline'
+import PictureAsPdfIcon from '@material-ui/icons/PictureAsPdf'
+import SendIcon from '@material-ui/icons/Send'
 import DateFnsUtils from '@date-io/date-fns'
 import {
   MuiPickersUtilsProvider,
@@ -202,10 +211,83 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   const [reportEdit, setReportEdit] = useState({})
   const { enqueueSnackbar } = useSnackbar()
   const [addIssue, setAddIssue] = React.useState('')
-  const [itemNo, setItemNo] = React.useState('')
-  const [itemDesc, setItemDesc] = React.useState('')
+  const [itemNoNeeded, setItemNoNeeded] = React.useState('')
+  const [itemDescNeeded, setItemDescNeeded] = React.useState('')
+  const [itemNoUsed, setItemNoUsed] = React.useState('')
+  const [itemDescUsed, setItemDescUsed] = React.useState('')
   const [selectedTab, setSelectedTab] = React.useState(0)
   const [openWebcam, setOpenWebcam] = React.useState(false)
+  const [openEmail, setOpenEmail] = React.useState(false)
+  const [emailTo, setEmailTo] = React.useState('')
+  const [emailSubject, setEmailSubject] = React.useState('')
+  const [emailBody, setEmailBody] = React.useState('')
+
+  const handleRequisitionOpen = () => {
+    let body = `${report.customerName} (${report.job})\n${window.location.href}\n\nPlease order the following items:\n\n`
+
+    report.materialsNeeded.map((material, mi) => {
+      body +=
+        '(' +
+        material.quantity +
+        'x) ' +
+        material.item +
+        '\n' +
+        material.description +
+        '\n\n'
+    })
+
+    setEmailTo('Keith Humphrey <wayimp@yahoo.com>')
+    // setEmailTo('Kat Earnest <kat@valleycuttingsystems.com>')
+
+    setEmailSubject(`Requisition Request for ${report.customerName}`)
+
+    setEmailBody(body)
+
+    setOpenEmail(true)
+  }
+
+  const handlePdfOpen = () => {
+    let body = `Your service report is available here: ${window.location.href}\n\nPDF version: ${baseURL}/pdf/${report._id}`
+
+    setEmailTo(`${report.customerName} <${report.customerEmail}>`)
+
+    setEmailSubject('Printable Service Report from Valley Cutting Systems')
+
+    setEmailBody(body)
+
+    setOpenEmail(true)
+  }
+
+  const handleEmailClose = () => {
+    setEmailTo('')
+    setEmailSubject('')
+    setEmailBody('')
+    setOpenEmail(false)
+  }
+
+  const sendEmail = async () => {
+    const email = {
+      to: emailTo,
+      body: emailBody,
+      subject: emailSubject,
+      reportId: report._id
+    }
+
+    await axiosClient
+      .post('/emails', email)
+      .then(res => {
+        enqueueSnackbar('Email Sent', {
+          variant: 'success'
+        })
+        handleEmailClose()
+      })
+      .catch(err => {
+        enqueueSnackbar('Problem Sending Email: ' + err, {
+          variant: 'error'
+        })
+        handleEmailClose()
+      })
+  }
 
   const addPlasma = () => {
     const plasma = {
@@ -213,7 +295,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       plasmaModel: '',
       plasmaSerial: '',
       gasConsoleSerial: '',
-      gasConsoleManufactureDate: ''
+      gasConsoleManufactureDate: '',
+      powerSupply: ''
     }
     const updated = {
       ...report,
@@ -292,7 +375,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
   }
 
   const onUnload = () => {
-    updateReport(report)
+    // This does not work, because the state is stale (reflecting previous state)
+    // updateReport(report)
   }
 
   const handleCloseWebcam = () => {
@@ -308,10 +392,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
       setReadOnly(false)
     }
 
+    /*
     window.addEventListener('unload', onUnload)
     return () => {
       window.removeEventListener('unload', onUnload)
     }
+    */
   }, [])
 
   const changeValue = async (name, value) => {
@@ -370,7 +456,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     updateReport(updated)
   }
 
-  const selectMaterialOption = option => {
+  const selectMaterialOption = (needed, option) => {
     // Translate this from an option to a material
     if (!option) return
     const material = {
@@ -381,34 +467,48 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     }
     const updated = {
       ...report,
-      materials: [material].concat(report.materials)
+      [needed ? 'materialsNeeded' : 'materialsUsed']: [material].concat(
+        report[needed ? 'materialsNeeded' : 'materialsUsed']
+      )
     }
     setReport(updated)
     updateReport(updated)
   }
 
-  const addNewMaterial = () => {
-    if (itemNo || itemDesc) {
+  const addNewMaterial = needed => {
+    if (
+      (needed && (itemNoNeeded || itemDescNeeded)) ||
+      (!needed && (itemNoUsed || itemDescUsed))
+    ) {
       const material = {
         quantity: 1,
-        item: itemNo,
-        description: itemDesc
+        item: needed ? itemNoNeeded : itemNoUsed,
+        description: needed ? itemDescNeeded : itemDescUsed
       }
       const updated = {
         ...report,
-        materials: [material].concat(report.materials)
+        [needed ? 'materialsNeeded' : 'materialsUsed']: [material].concat(
+          report[needed ? 'materialsNeeded' : 'materialsUsed']
+        )
       }
-      setItemNo('')
-      setItemDesc('')
+      if (needed) {
+        setItemNoNeeded('')
+        setItemDescNeeded('')
+      } else {
+        setItemNoUsed('')
+        setItemDescUsed('')
+      }
       setReport(updated)
       updateReport(updated)
     }
   }
 
-  const addMaterial = index => {
+  const addMaterial = (needed, index) => {
     const updated = {
       ...report,
-      materials: report.materials.map((material, i) => {
+      [needed ? 'materialsNeeded' : 'materialsUsed']: report[
+        needed ? 'materialsNeeded' : 'materialsUsed'
+      ].map((material, i) => {
         if (i === index) material.quantity += 1
         return material
       })
@@ -417,10 +517,12 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     updateReport(updated)
   }
 
-  const removeMaterial = index => {
+  const removeMaterial = (needed, index) => {
     const updated = {
       ...report,
-      materials: report.materials
+      [needed ? 'materialsNeeded' : 'materialsUsed']: report[
+        needed ? 'materialsNeeded' : 'materialsUsed'
+      ]
         .map((material, i) => {
           if (i === index) {
             material.quantity -= 1
@@ -432,6 +534,19 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           }
         })
         .filter(notNull => notNull)
+    }
+    setReport(updated)
+    updateReport(updated)
+  }
+
+  const moveMaterialToUsed = index => {
+    const materialToMove = report.materialsNeeded[index]
+    const updated = {
+      ...report,
+      materialsNeeded: report.materialsNeeded.filter(
+        (material, mi) => mi !== index
+      ),
+      materialsUsed: [materialToMove].concat(report.materialsUsed)
     }
     setReport(updated)
     updateReport(updated)
@@ -480,179 +595,27 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
     updateReport(updated)
   }
 
-  /*
-  const addLogEntry = () => {
-    const date = moment().tz('America/Los_Angeles')
-    const remainder = 5 - (date.minute() % 5)
-    const dateTime = moment(date).add(remainder, 'minutes')
-    const logEntry = {
-      logDate: dateTime,
-      timeOn: dateTime,
-      timeOff: dateTime,
-      mileage: 0.0,
-      hours: 0.0,
-      travel: false,
-      lodging: false,
-      toll: false
-    }
-    const updated = {
-      ...report,
-      logs: report.logs.concat(logEntry)
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const removeLogEntry = index => {
-    const updated = {
-      ...report,
-      logs: report.logs
-        .map((log, i) => {
-          if (i === index) return null
-          else return log
-        })
-        .filter(notNull => notNull)
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const changeLogMileage = (index, text) => {
-    const mileage = Number(text)
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, mileage }
-        else return log
-      })
-    }
-    setReport(updated)
-  }
-
-  const changeLogTravel = index => {
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, travel: !log.travel }
-        else return log
-      })
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const changeLogLodging = index => {
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, lodging: !log.lodging }
-        else return log
-      })
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const changeLogToll = index => {
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, toll: !log.toll }
-        else return log
-      })
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const handleLogDateChange = (index, date) => {
-    const logDate = moment(date).startOf('day')
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, logDate }
-        else return log
-      })
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const handleLogTimeOnChange = (index, date) => {
-    const timeOn = moment(report.logs[index].logDate)
-    const newTime = moment(date)
-    timeOn.hour(newTime.get('hour'))
-    timeOn.minute(newTime.get('minute'))
-    let hours = 0
-    if (report.logs[index].timeOff) {
-      const timeOff = moment(report.logs[index].timeOff)
-      timeOff.year(timeOn.year())
-      timeOff.month(timeOn.month())
-      timeOff.date(timeOn.date())
-      if (timeOff.isAfter(timeOn)) {
-        const duration = moment.duration(timeOff.diff(timeOn))
-        hours = Number(duration.asHours()).toFixed(2)
-      }
-    }
-
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, timeOn, hours }
-        else return log
-      })
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-
-  const handleLogTimeOffChange = (index, date) => {
-    const timeOff = moment(report.logs[index].logDate)
-    const newTime = moment(date)
-    timeOff.hour(newTime.get('hour'))
-    timeOff.minute(newTime.get('minute'))
-    let hours = 0
-    if (report.logs[index].timeOn) {
-      const timeOn = moment(report.logs[index].timeOn)
-      timeOn.year(timeOff.year())
-      timeOn.month(timeOff.month())
-      timeOn.date(timeOff.date())
-      if (timeOff.isAfter(timeOn)) {
-        const duration = moment.duration(timeOff.diff(timeOn))
-        hours = Number(duration.asHours()).toFixed(2)
-      }
-    }
-    const updated = {
-      ...report,
-      logs: report.logs.map((log, i) => {
-        if (i === index) return { ...log, timeOff, hours }
-        else return log
-      })
-    }
-    setReport(updated)
-    updateReport(updated)
-  }
-*/
-
   const updateReport = async updateReport => {
     await axiosClient
       .patch('/reports', updateReport)
       .then(res => {
-        //enqueueSnackbar('Report Updated', {
-        //  variant: 'success'
-        //})
+        /*
+        enqueueSnackbar('Report Updated', {
+          variant: 'success'
+        })
+        */
         setReport(updateReport)
       })
       .catch(err => {
-        //enqueueSnackbar('Update Error', {
-        //  variant: 'error'
-        //})
+        enqueueSnackbar('Update Error', {
+          variant: 'error'
+        })
       })
   }
 
   return (
     <Container className={classes.root}>
-      <TopBar />
+      <TopBar fieldService={report.fieldService ? true : false} />
       <div className={classes.content}>
         <Grid
           container
@@ -663,15 +626,30 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           className={classes.formGroupTop}
         >
           <Grid item>
-            <TextField
-              className={classes.textField}
-              name='job'
-              label='Job#'
-              disabled={readOnly}
-              defaultValue={report.job ? report.job : ''}
-              onChange={changeField}
-              onBlur={blurField}
+            <FormControlLabel
+              control={
+                <Switch
+                  disabled={readOnly}
+                  checked={report.fieldService ? true : false}
+                  onChange={changeCheckbox}
+                  name='fieldService'
+                />
+              }
+              label='Field Service'
             />
+            {report.fieldService ? (
+              <TextField
+                className={classes.textField}
+                name='job'
+                label='Job#'
+                disabled={readOnly}
+                defaultValue={report.job ? report.job : ''}
+                onChange={changeField}
+                onBlur={blurField}
+              />
+            ) : (
+              ''
+            )}
           </Grid>
           <Grid item>
             <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -682,7 +660,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 format='MM/dd/yyyy'
                 id='date'
                 label='Date'
-                value={report.date}
+                value={Date(report.date)}
                 onChange={changeDate}
                 onBlur={blurField}
                 disabled={readOnly}
@@ -895,7 +873,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               onBlur={blurField}
               disabled={readOnly}
             />
-            &nbsp;&nbsp;&nbsp;&nbsp;
+          </Grid>
+          <Grid item>
             <TextField
               className={classes.textField}
               variant='outlined'
@@ -917,8 +896,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               onBlur={blurField}
               disabled={readOnly}
             />
-          </Grid>
-          <Grid item>
+            &nbsp;&nbsp;&nbsp;&nbsp;
             <TextField
               className={classes.textField}
               variant='outlined'
@@ -948,14 +926,16 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           <Box width={1}>
             <Grid item xs={12}>
               <Typography style={{ margin: 6 }}>
-                Plasma Cutters
-                <IconButton
-                  onClick={() => addPlasma()}
-                  edge='end'
-                  disabled={readOnly}
-                >
-                  <AddCircleOutlineIcon />
-                </IconButton>
+                Plasma Systems
+                <Tooltip title='Add new Plasma System'>
+                  <IconButton
+                    onClick={() => addPlasma()}
+                    edge='end'
+                    disabled={readOnly}
+                  >
+                    <AddCircleOutlineIcon />
+                  </IconButton>
+                </Tooltip>
               </Typography>
             </Grid>
             <Grid>
@@ -967,7 +947,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                         <Grid
                           container
                           direction='row'
-                          spacing={2}
+                          spacing={1}
                           justify='space-between'
                           className={classes.formGroup}
                         >
@@ -981,7 +961,16 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                             onBlur={blurField}
                             disabled={readOnly}
                           />
-                          &nbsp;&nbsp;&nbsp;&nbsp;
+                          <TextField
+                            className={classes.textField}
+                            variant='outlined'
+                            name='powerSupply'
+                            label='Power Supply'
+                            defaultValue={plasma.powerSupply}
+                            onChange={event => changePlasma(index, event)}
+                            onBlur={blurField}
+                            disabled={readOnly}
+                          />
                           <TextField
                             className={classes.textField}
                             variant='outlined'
@@ -992,7 +981,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                             onBlur={blurField}
                             disabled={readOnly}
                           />
-                          &nbsp;&nbsp;&nbsp;&nbsp;
                           <TextField
                             className={classes.textField}
                             variant='outlined'
@@ -1003,7 +991,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                             onBlur={blurField}
                             disabled={readOnly}
                           />
-                          &nbsp;&nbsp;&nbsp;&nbsp;
                           <TextField
                             className={classes.textField}
                             variant='outlined'
@@ -1014,7 +1001,6 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                             onBlur={blurField}
                             disabled={readOnly}
                           />
-                          &nbsp;&nbsp;&nbsp;&nbsp;
                           <TextField
                             className={classes.textField}
                             variant='outlined'
@@ -1025,17 +1011,18 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                             onBlur={blurField}
                             disabled={readOnly}
                           />
-                          &nbsp;&nbsp;&nbsp;&nbsp;
                         </Grid>
                       </ListItemText>
                       <ListItemSecondaryAction>
-                        <IconButton
-                          onClick={() => removePlasma(index)}
-                          edge='end'
-                          disabled={readOnly}
-                        >
-                          <RemoveCircleOutlineIcon />
-                        </IconButton>
+                        <Tooltip title='Delete Plasma System'>
+                          <IconButton
+                            onClick={() => removePlasma(index)}
+                            edge='end'
+                            disabled={readOnly}
+                          >
+                            <RemoveCircleOutlineIcon />
+                          </IconButton>
+                        </Tooltip>
                       </ListItemSecondaryAction>
                     </ListItem>
                   ))}
@@ -1079,17 +1066,17 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             className={classes.formGroup}
           >
             <Grid item xs={12}>
-              <Typography style={{ margin: 6 }}>Materials Used</Typography>
+              <Typography style={{ margin: 6 }}>Materials Needed</Typography>
               <Select
-                id='materials'
-                instanceId='materials'
+                id='materialsNeeded'
+                instanceId='materialsNeeded'
                 styles={selectStyles}
                 className='itemsSelect'
                 classNamePrefix='select'
                 isClearable={true}
                 isSearchable={true}
-                onChange={selectMaterialOption}
-                name='items'
+                onChange={option => selectMaterialOption(true, option)}
+                name='materialsNeeded'
                 options={propsOptions}
                 isDisabled={readOnly}
               />
@@ -1100,8 +1087,8 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 variant='outlined'
                 name='itemNo'
                 label='Item Number'
-                value={itemNo}
-                onChange={event => setItemNo(event.target.value)}
+                value={itemNoNeeded}
+                onChange={event => setItemNoNeeded(event.target.value)}
                 disabled={readOnly}
               />
               &nbsp;&nbsp;&nbsp;&nbsp;
@@ -1110,13 +1097,13 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                 variant='outlined'
                 name='itemDesc'
                 label='Item Description'
-                value={null}
-                onChange={event => setItemDesc(event.target.value)}
+                value={itemDescNeeded}
+                onChange={event => setItemDescNeeded(event.target.value)}
                 disabled={readOnly}
               />
               <IconButton
                 style={{ marginTop: 6 }}
-                onClick={() => addNewMaterial()}
+                onClick={() => addNewMaterial(true)}
                 disabled={readOnly}
               >
                 <AddCircleOutlineIcon />
@@ -1124,7 +1111,7 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
             <Grid item xs={12}>
               <List>
-                {report.materials.map((material, index) => (
+                {report.materialsNeeded.map((material, index) => (
                   <ListItem key={'material' + index}>
                     <ListItemAvatar>
                       <Grid
@@ -1136,13 +1123,120 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
                       >
                         <Typography>{material.quantity.toString()}</Typography>
                         <IconButton
-                          onClick={() => addMaterial(index)}
+                          onClick={() => addMaterial(true, index)}
                           disabled={readOnly}
                         >
                           <AddCircleOutlineIcon />
                         </IconButton>
                         <IconButton
-                          onClick={() => removeMaterial(index)}
+                          onClick={() => removeMaterial(true, index)}
+                          disabled={readOnly}
+                        >
+                          <RemoveCircleOutlineIcon />
+                        </IconButton>
+                        <Tooltip title='Move to Materials Used'>
+                          <IconButton
+                            onClick={() => moveMaterialToUsed(index)}
+                            disabled={readOnly}
+                          >
+                            <PlayForWorkIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+                    </ListItemAvatar>
+                    <ListItemText
+                      edge='begin'
+                      primary={`${material.item}`}
+                      secondary={`${material.description}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Grid>
+            <IconButton
+              onClick={handleRequisitionOpen}
+              style={{ marginTop: 6 }}
+              disabled={readOnly}
+              color='secondary'
+            >
+              <MailOutlineIcon />
+              &nbsp;Requisition
+            </IconButton>
+          </Grid>
+        </Box>
+        <Box width={1}>
+          <Grid
+            container
+            direction='row'
+            spacing={2}
+            justify='space-between'
+            className={classes.formGroup}
+          >
+            <Grid item xs={12}>
+              <Typography style={{ margin: 6 }}>Materials Used</Typography>
+              <Select
+                id='materialsUsed'
+                instanceId='materialsUsed'
+                styles={selectStyles}
+                className='itemsSelect'
+                classNamePrefix='select'
+                isClearable={true}
+                isSearchable={true}
+                onChange={option => selectMaterialOption(false, option)}
+                name='materialsUsed'
+                options={propsOptions}
+                isDisabled={readOnly}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                className={classes.textField}
+                variant='outlined'
+                name='itemNo'
+                label='Item Number'
+                value={itemNoUsed}
+                onChange={event => setItemNoUsed(event.target.value)}
+                disabled={readOnly}
+              />
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              <TextField
+                className={classes.textField}
+                variant='outlined'
+                name='itemDesc'
+                label='Item Description'
+                value={itemDescUsed}
+                onChange={event => setItemDescUsed(event.target.value)}
+                disabled={readOnly}
+              />
+              <IconButton
+                style={{ marginTop: 6 }}
+                onClick={() => addNewMaterial(false)}
+                disabled={readOnly}
+              >
+                <AddCircleOutlineIcon />
+              </IconButton>
+            </Grid>
+            <Grid item xs={12}>
+              <List>
+                {report.materialsUsed.map((material, index) => (
+                  <ListItem key={'material' + index}>
+                    <ListItemAvatar>
+                      <Grid
+                        container
+                        direction='row'
+                        justify='flex-start'
+                        alignItems='center'
+                        spacing={0}
+                      >
+                        <Typography>{material.quantity.toString()}</Typography>
+                        <IconButton
+                          onClick={() => addMaterial(false, index)}
+                          disabled={readOnly}
+                        >
+                          <AddCircleOutlineIcon />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => removeMaterial(false, index)}
                           disabled={readOnly}
                         >
                           <RemoveCircleOutlineIcon />
@@ -1241,95 +1335,104 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
             </Grid>
           </Box>
         </Grid>
-        <Grid
-          container
-          spacing={2}
-          justify='space-between'
-          className={classes.formGroup}
-        >
-          <Box width={1}>
-            <Grid item xs={12}>
-              <Typography style={{ margin: 6 }}>TSheets</Typography>
-            </Grid>
-            <Grid>
-              <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                <List dense={true}>
-                  {report.tsheets.map((tsheet, index) => (
-                    <ListItem key={'tsheet' + index} style={{ marginTop: -40 }}>
-                      <ListItemText>
-                        <Grid
-                          container
-                          direction='row'
-                          spacing={2}
-                          justify='space-between'
-                          className={classes.formGroup}
-                        >
-                          <Grid item>
-                            <DatePicker
-                              variant='outlined'
-                              format='MM/dd/yyyy'
-                              label='Date'
-                              value={tsheet.date}
-                              disabled={true}
-                            />
+        {report.fieldService ? (
+          <Grid
+            container
+            spacing={2}
+            justify='space-between'
+            className={classes.formGroup}
+          >
+            <Box width={1}>
+              <Grid item xs={12}>
+                <Typography style={{ margin: 6 }}>TSheets</Typography>
+              </Grid>
+              <Grid>
+                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                  <List dense={true}>
+                    {report.tsheets.map((tsheet, index) => (
+                      <ListItem
+                        key={'tsheet' + index}
+                        style={{ marginTop: -40 }}
+                      >
+                        <ListItemText>
+                          <Grid
+                            container
+                            direction='row'
+                            spacing={2}
+                            justify='space-between'
+                            className={classes.formGroup}
+                          >
+                            <Grid item>
+                              <DatePicker
+                                variant='outlined'
+                                format='MM/dd/yyyy'
+                                label='Date'
+                                value={tsheet.date}
+                                disabled={true}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <TimePicker
+                                label='Start'
+                                value={tsheet.start}
+                                disabled={true}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <TimePicker
+                                label='End'
+                                value={tsheet.end}
+                                disabled={true}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <TextField
+                                label='Duration'
+                                type='string'
+                                value={new Date(1000 * tsheet.duration)
+                                  .toISOString()
+                                  .substr(11, 5)}
+                                disabled={true}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <TextField
+                                label='Name'
+                                type='string'
+                                value={tsheet.name}
+                                disabled={true}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <TextField
+                                label='Notes'
+                                type='string'
+                                value={tsheet.notes}
+                                disabled={true}
+                              />
+                            </Grid>
                           </Grid>
-                          <Grid item>
-                            <TimePicker
-                              label='Start'
-                              value={tsheet.start}
-                              disabled={true}
-                            />
-                          </Grid>
-                          <Grid item>
-                            <TimePicker
-                              label='End'
-                              value={tsheet.end}
-                              disabled={true}
-                            />
-                          </Grid>
-                          <Grid item>
-                            <TextField
-                              label='Duration'
-                              type='string'
-                              value={new Date(1000 * tsheet.duration)
-                                .toISOString()
-                                .substr(11, 5)}
-                              disabled={true}
-                            />
-                          </Grid>
-                          <Grid item>
-                            <TextField
-                              label='Name'
-                              type='string'
-                              value={tsheet.name}
-                              disabled={true}
-                            />
-                          </Grid>
-                          <Grid item>
-                            <TextField
-                              label='Notes'
-                              type='string'
-                              value={tsheet.notes}
-                              disabled={true}
-                            />
-                          </Grid>
-                        </Grid>
-                      </ListItemText>
-                    </ListItem>
-                  ))}
-                </List>
-              </MuiPickersUtilsProvider>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography style={{ margin: 6 }}>
-                Total Time:{' '}
-                {new Date(1000 * report.tsheets.sum('duration'))
-                  .toISOString()
-                  .substr(11, 5)}
-              </Typography>
-            </Grid>
-          </Box>
-        </Grid>
+                        </ListItemText>
+                      </ListItem>
+                    ))}
+                  </List>
+                </MuiPickersUtilsProvider>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography style={{ margin: 6 }}>
+                  Total Time:&nbsp;
+                  {new Date(1000 * report.tsheets.sum('duration'))
+                    .toISOString()
+                    .substr(11, 5)}
+                  &nbsp;(Final time may change when final time sheet has been
+                  submitted.)
+                </Typography>
+              </Grid>
+            </Box>
+          </Grid>
+        ) : (
+          ''
+        )}
 
         <Grid
           container
@@ -1444,6 +1547,16 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
               }
               label='Has the job been completed to your satisfaction?'
             />
+            <br />
+            <IconButton
+              onClick={handlePdfOpen}
+              style={{ marginTop: 6 }}
+              disabled={readOnly}
+              color='secondary'
+            >
+              <PictureAsPdfIcon />
+              &nbsp;Email Report
+            </IconButton>
           </Grid>
           <Grid item>
             <TextField
@@ -1496,6 +1609,47 @@ const Report = ({ propsReport, propsOptions, dispatch, token }) => {
           </div>
         </Modal>
       </div>
+      <Dialog open={openEmail} onClose={handleEmailClose}>
+        <DialogTitle>{'Email'}</DialogTitle>
+        <Grid style={{ margin: 20 }}>
+          <TextField
+            style={{ marginBottom: 10 }}
+            className={classes.textFieldWide}
+            variant='outlined'
+            name='emailTo'
+            label='To:'
+            defaultValue={emailTo}
+            onChange={event => setEmailTo(event.target.value)}
+          />
+          <TextField
+            className={classes.textFieldWide}
+            style={{ marginBottom: 10 }}
+            multiline={true}
+            variant='outlined'
+            name='emailSubject'
+            label='Subject'
+            defaultValue={emailSubject}
+            onChange={event => setEmailSubject(event.target.value)}
+          />
+          <TextField
+            className={classes.textFieldWide}
+            multiline={true}
+            variant='outlined'
+            name='emailBody'
+            label='Body'
+            defaultValue={emailBody}
+            onChange={event => setEmailBody(event.target.value)}
+          />
+        </Grid>
+        <DialogActions>
+          <Button onClick={handleEmailClose} color='primary'>
+            Cancel
+          </Button>
+          <IconButton onClick={sendEmail} color='secondary' autoFocus>
+            <SendIcon /> Send
+          </IconButton>
+        </DialogActions>
+      </Dialog>
     </Container>
   )
 }
