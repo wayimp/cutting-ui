@@ -43,7 +43,7 @@ class cuttingApp extends App {
             autoHideDuration={2000}
             anchorOrigin={{
               vertical: 'top',
-              horizontal: 'center'
+              horizontal: 'right'
             }}
           >
             <Component {...pageProps} />

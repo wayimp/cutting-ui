@@ -18,7 +18,7 @@ const priceFormat = '$0.00'
 import ReportCard from '../components/ReportCard'
 import { flatten } from 'lodash'
 import moment from 'moment-timezone'
-const dateFormat = 'YYYY-MM-DDTHH:mm:SS'
+const dateFormat = 'YYYY-MM-DD'
 const dateDisplay = 'dddd MMMM DD, YYYY'
 import Container from '@material-ui/core/Container'
 import Card from '@material-ui/core/Card'
@@ -61,6 +61,7 @@ import { green } from '@material-ui/core/colors'
 import CheckIcon from '@material-ui/icons/Check'
 import Select from 'react-select'
 import CancelIcon from '@material-ui/icons/Cancel'
+import { utcToZonedTime } from 'date-fns-tz'
 
 const selectStyles = {
   menu: base => ({
@@ -207,7 +208,7 @@ const Page = ({ dispatch, token }) => {
         response.data && Array.isArray(response.data) ? response.data : []
       result = result.map(company => ({
         ...company,
-        label: company.name
+        label: '[' + company.job + '] ' + company.name
       }))
       setCompanies(result)
     })
@@ -277,8 +278,9 @@ const Page = ({ dispatch, token }) => {
   const createNew = async company => {
     const newReport = {
       archived: false,
-      job: company.job ? company.job : '',
-      date: moment().tz('America/Los_Angeles'),
+      fieldService: company.job ? true : false,
+      job: company.job ? company.job : 0,
+      date: new Date(moment.tz('America/Los_Angeles').format('YYYY-MM-DD')),
       po: '',
       customerName: company.name ? company.name : '',
       customerStreet: company.addr1 ? company.addr1 : '',
@@ -289,7 +291,6 @@ const Page = ({ dispatch, token }) => {
       customerPhone: '',
       machineType: '',
       machineSerial: '',
-      machinePowerSupply: '',
       machineManufactureDate: '',
       torchHeightControlModel: '',
       torchHeightControlSerial: '',
@@ -299,7 +300,8 @@ const Page = ({ dispatch, token }) => {
       torches: '',
       plasmas: [],
       reportedTrouble: '',
-      materials: [],
+      materialsNeeded: [],
+      materialsUsed: [],
       servicePerformed: '',
       issues: [],
       tsheets: [],
@@ -315,30 +317,47 @@ const Page = ({ dispatch, token }) => {
   }
 
   const copyToNew = async existing => {
+    var d = new Date()
+
     const newReport = {
       archived: false,
-      job: existing.job,
-      date: moment().tz('America/Los_Angeles'),
-      po: existing.po,
-      customerName: existing.customerName,
-      customerStreet: existing.customerStreet,
-      customerCity: existing.customerCity,
-      customerState: existing.customerState,
-      customerZip: existing.customerZip,
-      customerPhone: existing.customerPhone,
-      machineType: existing.machineType,
-      machineSerial: existing.machineSerial,
-      control: existing.control,
-      controlSerial: existing.controlSerial,
-      plasmaType: existing.plasmaType,
-      plasmaModel: existing.plasmaModel,
-      plasmaSerial: existing.plasmaSerial,
-      oxyFuel: existing.oxyFuel,
-      torches: existing.torches,
-      drive: existing.drive,
-      driveSerial: existing.driveSerial,
+      fieldService: existing.fieldService ? true : false,
+      job:
+        existing.satisfaction && existing.customerSignatureDate
+          ? 0
+          : existing.job
+          ? existing.job
+          : 0,
+      date: new Date(moment.tz('America/Los_Angeles').format('YYYY-MM-DD')),
+      po: existing.po ? existing.po : '',
+      customerName: existing.customerName ? existing.customerName : '',
+      customerStreet: existing.customerStreet ? existing.customerStreet : '',
+      customerStreet2: existing.customerStreet2 ? existing.customerStreet2 : '',
+      customerCity: existing.customerCity ? existing.customerCity : '',
+      customerState: existing.customerState ? existing.customerState : '',
+      customerZip: existing.customerZip ? existing.customerZip : '',
+      customerPhone: existing.customerPhone ? existing.customerPhone : '',
+      machineType: existing.machineType ? existing.machineType : '',
+      machineSerial: existing.machineSerial ? existing.machineSerial : '',
+      machineManufactureDate: existing.machineManufactureDate
+        ? existing.machineManufactureDate
+        : '',
+      torchHeightControlModel: existing.torchHeightControlModel
+        ? existing.torchHeightControlModel
+        : '',
+      torchHeightControlSerial: existing.torchHeightControlSerial
+        ? existing.torchHeightControlSerial
+        : '',
+      positionerSerial: existing.positionerSerial
+        ? existing.positionerSerial
+        : '',
+      interfaceSerial: existing.interfaceSerial ? existing.interfaceSerial : '',
+      oxyFuel: existing.oxyFuel ? existing.oxyFuel : false,
+      torches: existing.torches ? existing.torches : '',
+      plasmas: existing.plasmas ? existing.plasmas : [],
       reportedTrouble: '',
-      materials: [],
+      materialsNeeded: [],
+      materialsUsed: [],
       servicePerformed: '',
       issues: [],
       tsheets: [],
