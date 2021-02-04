@@ -1469,7 +1469,7 @@ const Report = ({ propsReport, propsSent, propsOptions, dispatch, token }) => {
               <Grid>
                 <MuiPickersUtilsProvider utils={DateFnsUtils}>
                   <List dense={true}>
-                    {report.tsheets.map((tsheet, index) => (
+                    {(report.tsheets||[]).map((tsheet, index) => (
                       <ListItem
                         key={'tsheet' + index}
                         style={{ marginTop: -40 }}
@@ -1541,7 +1541,7 @@ const Report = ({ propsReport, propsSent, propsOptions, dispatch, token }) => {
               <Grid item xs={12}>
                 <Typography style={{ margin: 6 }}>
                   Total Time:&nbsp;
-                  {new Date(1000 * report.tsheets.sum('duration'))
+                  {new Date(1000 * (report.tsheets||[]).sum('duration'))
                     .toISOString()
                     .substr(11, 5)}
                   &nbsp;(Final time may change when final time sheet has been
